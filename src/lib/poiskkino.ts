@@ -1,6 +1,7 @@
 // Клиент API ПоискКино (бывший kinopoisk.dev): https://poiskkino.dev
 // Работает только на сервере, чтобы ключ не попал в браузер.
 import "server-only";
+import { usableImage } from "@/lib/images";
 
 const API_URL = "https://api.poiskkino.dev";
 
@@ -87,10 +88,14 @@ async function request<T>(
     }
   }
 
-  const res = await fetch(url, {
-    headers: { "X-API-KEY": key },
-    next: { revalidate: cacheSeconds },
-  });
+  const load = () =>
+    fetch(url, {
+      headers: { "X-API-KEY": key },
+      next: { revalidate: cacheSeconds },
+    });
+  // Связь с API иногда кратковременно пропадает («fetch failed») —
+  // одна повторная попытка спасает большинство таких случаев
+  const res = await load().catch(() => load());
   if (!res.ok) {
     throw new Error(`ПоискКино ответил ${res.status} на запрос ${path}`);
   }
@@ -102,11 +107,29 @@ export async function searchTitles(query: string): Promise<SearchItem[]> {
     query,
     limit: 20,
   });
-  return data.docs;
+  return data.docs.map((item) => ({ ...item, poster: cleanPoster(item.poster) }));
 }
 
 export async function getTitle(id: number): Promise<Title> {
-  return request<Title>(`/v1.5/movie/${id}`);
+  const title = await request<Title>(`/v1.5/movie/${id}`);
+  return {
+    ...title,
+    poster: cleanPoster(title.poster),
+    persons: title.persons?.map((person) => ({
+      ...person,
+      photo: usableImage(person.photo),
+    })),
+  };
+}
+
+// Убираем картинки, которые не загрузятся (см. images.ts)
+function cleanPoster(poster?: Poster): Poster | undefined {
+  return (
+    poster && {
+      url: usableImage(poster.url),
+      previewUrl: usableImage(poster.previewUrl),
+    }
+  );
 }
 
 export async function getSeasons(movieId: number): Promise<Season[]> {
@@ -116,8 +139,16 @@ export async function getSeasons(movieId: number): Promise<Season[]> {
     sortField: "number",
     sortType: 1,
   });
-  // Сезон 0 — спецвыпуски, для рекапов они не нужны
-  return data.docs.filter((season) => season.number > 0);
+  // Сезон 0 — спецвыпуски, для рекапов они не нужны.
+  // Серии API может отдавать не по порядку.
+  return data.docs
+    .filter((season) => season.number > 0)
+    .map((season) => ({
+      ...season,
+      episodes: [...(season.episodes ?? [])].sort(
+        (a, b) => a.number - b.number,
+      ),
+    }));
 }
 
 // В карточке фильма имена персонажей не приходят — они есть только

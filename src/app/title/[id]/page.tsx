@@ -3,7 +3,13 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { SeasonsList } from "@/components/SeasonsList";
 import { TitleProgress } from "@/components/TitleProgress";
-import { getRoles, getSeasons, getTitle, TYPE_LABELS } from "@/lib/poiskkino";
+import {
+  getRoles,
+  getSeasons,
+  getTitle,
+  TYPE_LABELS,
+  type Title,
+} from "@/lib/poiskkino";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -11,6 +17,15 @@ async function loadTitle(params: Props["params"]) {
   const id = Number((await params).id);
   if (!Number.isInteger(id) || id <= 0) notFound();
   return getTitle(id);
+}
+
+// Сезоны вместе с моментом загрузки: по нему сервер и браузер
+// одинаково решают, какие серии уже вышли
+async function loadSeasons(title: Title) {
+  return {
+    seasons: title.isSeries ? await getSeasons(title.id) : [],
+    now: Date.now(),
+  };
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -27,8 +42,8 @@ export default async function TitlePage({ params }: Props) {
   const actors = (title.persons ?? [])
     .filter((person) => person.enProfession === "actor")
     .slice(0, 12);
-  const [seasons, roles] = await Promise.all([
-    title.isSeries ? getSeasons(title.id) : [],
+  const [{ seasons, now }, roles] = await Promise.all([
+    loadSeasons(title),
     // Без ролей страница всё равно полезна, поэтому ошибку не пробрасываем
     getRoles(
       title.id,
@@ -96,7 +111,7 @@ export default async function TitlePage({ params }: Props) {
         </div>
       </section>
 
-      <TitleProgress title={titleInfo} />
+      <TitleProgress title={titleInfo} seasons={seasons} now={now} />
 
       {actors.length > 0 && (
         <section className="flex flex-col gap-4">
@@ -134,7 +149,7 @@ export default async function TitlePage({ params }: Props) {
       {seasons.length > 0 && (
         <section className="flex flex-col gap-4">
           <h2 className="text-xl font-bold">Сезоны и серии</h2>
-          <SeasonsList title={titleInfo} seasons={seasons} />
+          <SeasonsList title={titleInfo} seasons={seasons} now={now} />
         </section>
       )}
     </article>

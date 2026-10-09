@@ -20,6 +20,9 @@ export interface Progress extends TitleInfo {
   episodeName?: string;
   // Секунды от начала серии или фильма
   seconds?: number;
+  // Отмеченная серия досмотрена до конца, а следующей ещё нет —
+  // сериал ждёт новый сезон
+  watched?: boolean;
   updatedAt: number;
 }
 
@@ -90,7 +93,10 @@ export function useProgress(titleId: number): Progress | undefined {
 
 export function saveProgress(
   title: TitleInfo,
-  mark: Pick<Progress, "season" | "episode" | "episodeName" | "seconds">,
+  mark: Pick<
+    Progress,
+    "season" | "episode" | "episodeName" | "seconds" | "watched"
+  >,
 ) {
   write({
     ...getSnapshot(),
@@ -142,7 +148,9 @@ export function describeProgress(progress: Progress): string {
   if (progress.season && progress.episode) {
     parts.push(`Сезон ${progress.season}, серия ${progress.episode}`);
   }
-  if (progress.seconds !== undefined) {
+  if (progress.watched) {
+    parts.push("досмотрено");
+  } else if (progress.seconds !== undefined) {
     parts.push(formatTime(progress.seconds));
   }
   return parts.join(" · ");

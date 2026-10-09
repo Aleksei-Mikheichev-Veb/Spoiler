@@ -1,4 +1,4 @@
-import { ContinueWatching } from "@/components/ContinueWatching";
+import { Library } from "@/components/Library";
 import { SearchForm } from "@/components/SearchForm";
 
 export default function Home() {
@@ -14,7 +14,7 @@ export default function Home() {
         </p>
         <SearchForm />
       </section>
-      <ContinueWatching />
+      <Library />
     </div>
   );
 }
