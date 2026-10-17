@@ -49,6 +49,10 @@ export interface PersonInTitle {
 
 export interface Title extends SearchItem {
   description?: string;
+  // Длительность фильма в минутах
+  movieLength?: number;
+  // Средняя длительность серии в минутах
+  seriesLength?: number;
   genres?: { name: string }[];
   persons?: PersonInTitle[];
   seasonsInfo?: { number: number; episodesCount: number }[];

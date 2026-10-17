@@ -1,10 +1,7 @@
 // Метки «где я остановился». Пока хранятся в браузере (localStorage),
 // позже переедут в аккаунт пользователя.
 // Используется только из клиентских компонентов.
-import { useSyncExternalStore } from "react";
-
-const STORAGE_KEY = "spoiler:progress";
-const CHANGE_EVENT = "spoiler:progress-change";
+import { createLocalStore } from "@/lib/local-store";
 
 export interface TitleInfo {
   id: number;
@@ -26,69 +23,17 @@ export interface Progress extends TitleInfo {
   updatedAt: number;
 }
 
-type ProgressMap = Record<string, Progress>;
-
-const EMPTY: ProgressMap = {};
-
-// localStorage может быть недоступен (приватный режим, запрет cookies),
-// поэтому все обращения обёрнуты в try/catch.
-function readRaw(): string | null {
-  try {
-    return window.localStorage.getItem(STORAGE_KEY);
-  } catch {
-    return null;
-  }
-}
-
-let cachedRaw: string | null = null;
-let cachedMap: ProgressMap = EMPTY;
-
-// useSyncExternalStore требует один и тот же объект, пока данные не менялись
-function getSnapshot(): ProgressMap {
-  const raw = readRaw();
-  if (raw !== cachedRaw) {
-    cachedRaw = raw;
-    try {
-      cachedMap = raw ? (JSON.parse(raw) as ProgressMap) : EMPTY;
-    } catch {
-      cachedMap = EMPTY;
-    }
-  }
-  return cachedMap;
-}
-
-function getServerSnapshot(): ProgressMap {
-  return EMPTY;
-}
-
-function subscribe(onChange: () => void) {
-  window.addEventListener("storage", onChange);
-  window.addEventListener(CHANGE_EVENT, onChange);
-  return () => {
-    window.removeEventListener("storage", onChange);
-    window.removeEventListener(CHANGE_EVENT, onChange);
-  };
-}
-
-function write(map: ProgressMap) {
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(map));
-  } catch {
-    // Не удалось сохранить — метка проживёт до перезагрузки страницы
-    cachedRaw = JSON.stringify(map);
-    cachedMap = map;
-  }
-  window.dispatchEvent(new Event(CHANGE_EVENT));
-}
+const store = createLocalStore<Record<string, Progress>>(
+  "spoiler:progress",
+  {},
+);
 
 export function useAllProgress(): Progress[] {
-  const map = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-  return Object.values(map).sort((a, b) => b.updatedAt - a.updatedAt);
+  return Object.values(store.use()).sort((a, b) => b.updatedAt - a.updatedAt);
 }
 
 export function useProgress(titleId: number): Progress | undefined {
-  const map = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-  return map[titleId];
+  return store.use()[titleId];
 }
 
 export function saveProgress(
@@ -98,16 +43,16 @@ export function saveProgress(
     "season" | "episode" | "episodeName" | "seconds" | "watched"
   >,
 ) {
-  write({
-    ...getSnapshot(),
+  store.set({
+    ...store.get(),
     [title.id]: { ...title, ...mark, updatedAt: Date.now() },
   });
 }
 
 export function removeProgress(titleId: number) {
-  const map = { ...getSnapshot() };
+  const map = { ...store.get() };
   delete map[titleId];
-  write(map);
+  store.set(map);
 }
 
 // Время вводится только цифрами и заполняется справа, как на таймере:

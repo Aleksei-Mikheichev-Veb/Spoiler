@@ -1,15 +1,22 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
+import { CharacterGrid } from "@/components/Characters";
+import { ListControls } from "@/components/ListControls";
+import { RecapPanel } from "@/components/RecapPanel";
 import { SeasonsList } from "@/components/SeasonsList";
 import { TitleProgress } from "@/components/TitleProgress";
+import { airedEpisodes } from "@/lib/episodes";
+import { formatMinutes, plural } from "@/lib/plural";
 import {
   getRoles,
   getSeasons,
   getTitle,
   TYPE_LABELS,
+  type Season,
   type Title,
 } from "@/lib/poiskkino";
+import { getRecap } from "@/lib/recaps";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -17,6 +24,25 @@ async function loadTitle(params: Props["params"]) {
   const id = Number((await params).id);
   if (!Number.isInteger(id) || id <= 0) notFound();
   return getTitle(id);
+}
+
+// «Фильм · 2 ч 46 мин» или «Сериал · 3 сезона · серия ~50 мин» —
+// чтобы в списках сразу было видно, что это и сколько смотреть
+function describeLength(title: Title, seasons: Season[], now: number) {
+  if (!title.isSeries) {
+    return title.movieLength
+      ? `Фильм · ${formatMinutes(title.movieLength)}`
+      : "Фильм";
+  }
+  const count = new Set(airedEpisodes(seasons, now).map(([season]) => season))
+    .size;
+  return [
+    "Сериал",
+    count && `${count} ${plural(count, ["сезон", "сезона", "сезонов"])}`,
+    title.seriesLength && `серия ~${title.seriesLength} мин`,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 }
 
 // Сезоны вместе с моментом загрузки: по нему сервер и браузер
@@ -42,13 +68,14 @@ export default async function TitlePage({ params }: Props) {
   const actors = (title.persons ?? [])
     .filter((person) => person.enProfession === "actor")
     .slice(0, 12);
-  const [{ seasons, now }, roles] = await Promise.all([
+  const [{ seasons, now }, roles, recap] = await Promise.all([
     loadSeasons(title),
     // Без ролей страница всё равно полезна, поэтому ошибку не пробрасываем
     getRoles(
       title.id,
       actors.map((actor) => actor.id),
     ).catch(() => ({}) as Record<number, string>),
+    title.isSeries ? getRecap(title.id) : null,
   ]);
   const titleInfo = {
     id: title.id,
@@ -57,6 +84,7 @@ export default async function TitlePage({ params }: Props) {
     posterUrl: title.poster?.previewUrl,
     isSeries: Boolean(title.isSeries),
   };
+  const summary = describeLength(title, seasons, now);
 
   return (
     <article className="flex flex-col gap-10">
@@ -86,6 +114,7 @@ export default async function TitlePage({ params }: Props) {
               .filter(Boolean)
               .join(" · ")}
           </p>
+          <p className="text-sm text-white/50">{summary}</p>
           {title.rating?.kp ? (
             <p className="text-sm">
               Кинопоиск{" "}
@@ -108,12 +137,30 @@ export default async function TitlePage({ params }: Props) {
               {title.description}
             </p>
           )}
+          <ListControls title={titleInfo} summary={summary} />
         </div>
       </section>
 
       <TitleProgress title={titleInfo} seasons={seasons} now={now} />
 
-      {actors.length > 0 && (
+      {recap && (
+        <RecapPanel
+          title={titleInfo}
+          recap={recap}
+          seasons={seasons}
+          now={now}
+        />
+      )}
+
+      {/* Для сериалов с нашей базой героев — список без спойлеров */}
+      {recap?.characters?.length ? (
+        <CharacterGrid
+          titleId={title.id}
+          characters={recap.characters}
+          seasons={seasons}
+          now={now}
+        />
+      ) : actors.length > 0 && (
         <section className="flex flex-col gap-4">
           <h2 className="text-xl font-bold">Персонажи</h2>
           <ul className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-6">
