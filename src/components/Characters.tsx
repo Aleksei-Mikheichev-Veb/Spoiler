@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { Fragment, useEffect, useRef, useState } from "react";
-import type { EpisodeKey } from "@/lib/episodes";
+import { isAfter, type EpisodeKey } from "@/lib/episodes";
 import { snapshotAt, useRecapBoundary } from "@/lib/recap-boundary";
 import type { Season } from "@/lib/poiskkino";
 import type { Character } from "@/lib/recaps";
@@ -11,6 +11,8 @@ import type { Character } from "@/lib/recaps";
 export interface KnownCharacter {
   character: Character;
   text: string;
+  // Лицо и актёр пока скрыты — иначе спойлер
+  hidden: boolean;
 }
 
 export type KnownCharacters = Map<string, KnownCharacter>;
@@ -22,7 +24,18 @@ export function knownCharacters(
   const known: KnownCharacters = new Map();
   for (const character of characters) {
     const snapshot = snapshotAt(character, last);
-    if (snapshot) known.set(character.id, { character, text: snapshot.text });
+    if (!snapshot) continue;
+    const hidden = Boolean(
+      character.revealFrom && (!last || isAfter(character.revealFrom, last)),
+    );
+    known.set(character.id, {
+      // Фото и актёра убираем прямо из данных, чтобы они не попали в разметку
+      character: hidden
+        ? { ...character, photo: undefined, actor: undefined }
+        : character,
+      text: snapshot.text,
+      hidden,
+    });
   }
   return known;
 }
@@ -171,7 +184,12 @@ function CharacterCard({ entry }: { entry: KnownCharacter }) {
   const { character, text } = entry;
   return (
     <div className="flex gap-3 text-left">
-      <Portrait character={character} className="h-24 w-[72px]" sizes="72px" />
+      <Portrait
+        character={character}
+        hidden={entry.hidden}
+        className="h-24 w-[72px]"
+        sizes="72px"
+      />
       <div className="flex min-w-0 flex-col gap-1">
         <span className="font-semibold text-white">{character.name}</span>
         {character.actor && (
@@ -185,18 +203,23 @@ function CharacterCard({ entry }: { entry: KnownCharacter }) {
 
 function Portrait({
   character,
+  hidden = false,
   className,
   sizes,
 }: {
   character: Character;
+  hidden?: boolean;
   className: string;
   sizes: string;
 }) {
-  const initials = character.name
-    .split(" ")
-    .map((word) => word[0])
-    .slice(0, 2)
-    .join("");
+  // Скрытое лицо — знак вопроса, иначе инициалы, если нет фото
+  const initials = hidden
+    ? "?"
+    : character.name
+        .split(" ")
+        .map((word) => word[0])
+        .slice(0, 2)
+        .join("");
   return (
     <div
       className={`relative shrink-0 overflow-hidden rounded-lg bg-white/10 ${className}`}
@@ -252,6 +275,7 @@ export function CharacterGrid({
           >
             <Portrait
               character={entry.character}
+              hidden={entry.hidden}
               className="h-20 w-[60px]"
               sizes="60px"
             />

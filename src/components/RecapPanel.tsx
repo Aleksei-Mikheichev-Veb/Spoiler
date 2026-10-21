@@ -101,6 +101,15 @@ export function RecapPanel({
     ? `после ${last[1]} серии ${last[0]} сезона`
     : `перед ${mark[1]} серией ${mark[0]} сезона`;
 
+  // Пометка к сезону, который человек собирается смотреть
+  // (например, «это отдельная история»)
+  const upcomingSeason = watched
+    ? last[1] >= lastInSeason(last[0])
+      ? last[0] + 1
+      : last[0]
+    : mark[0];
+  const note = recap.seasonNotes?.find((item) => item.season === upcomingSeason);
+
   return (
     <Shell>
       <p className="text-sm text-white/50">
@@ -112,6 +121,18 @@ export function RecapPanel({
         </span>
         . Всё, что дальше, мы не показываем.
       </p>
+
+      {note && (
+        <div className="rounded-xl border border-sky-400/40 bg-sky-400/10 p-4">
+          <h3 className="mb-1 font-semibold text-sky-300">
+            {upcomingSeason} сезон — отдельная история
+          </h3>
+          <p className="leading-relaxed text-white/85">{note.text}</p>
+          <p className="mt-2 text-sm text-white/50">
+            Если всё же хочется вспомнить прошлые сезоны — пересказ ниже.
+          </p>
+        </div>
+      )}
 
       <div
         role="tablist"

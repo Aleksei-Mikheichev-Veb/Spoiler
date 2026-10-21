@@ -36,12 +36,23 @@ export interface Character {
   name: string;
   actor?: string;
   photo?: string;
+  // С какой серии можно показывать фото и актёра. Нужно для тайных
+  // злодеев: лицо и имя актёра выдают, кто убийца
+  revealFrom?: [season: number, episode: number];
   about: CharacterSnapshot[];
+}
+
+// Пометка к сезону. Например, у антологий («Фишер», «Фарго») новый
+// сезон — отдельная история, и прошлые вспоминать не обязательно.
+export interface SeasonNote {
+  season: number;
+  text: string;
 }
 
 export interface Recap {
   titleId: number;
   sources: string[];
+  seasonNotes?: SeasonNote[];
   characters?: Character[];
   seasons: SeasonRecap[];
 }
