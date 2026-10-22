@@ -25,7 +25,7 @@ function field(value: unknown, max: number): string {
 }
 
 export async function POST(request: Request) {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const token = process.env.TELEGRAM_BOT_TOKEN?.trim();
   const chatId = process.env.TELEGRAM_CHAT_ID;
   if (!token || !chatId) {
     return NextResponse.json(
@@ -59,16 +59,32 @@ export async function POST(request: Request) {
     .filter((line, index) => line || index === 2 || index === 4)
     .join("\n");
 
-  const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    // Без parse_mode: текст отзыва отправляем как есть, без разметки
-    body: JSON.stringify({ chat_id: chatId, text: message }),
-  }).catch(() => null);
-
-  if (!res?.ok) {
+  let res: Response;
+  try {
+    res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      // Без parse_mode: текст отзыва отправляем как есть, без разметки
+      body: JSON.stringify({ chat_id: chatId.trim(), text: message }),
+      signal: AbortSignal.timeout(15_000),
+    });
+  } catch (error) {
+    // Сервер не достучался до Telegram (сеть, блокировка, таймаут)
+    const cause = (error as { cause?: { code?: string } }).cause?.code;
+    console.error("feedback: нет связи с Telegram", cause ?? error);
     return NextResponse.json(
-      { error: "Telegram не принял сообщение" },
+      { error: `Сервер не смог связаться с Telegram (${cause ?? "нет ответа"})` },
+      { status: 502 },
+    );
+  }
+
+  if (!res.ok) {
+    // Telegram ответил отказом — его описание подскажет причину
+    const data = await res.json().catch(() => null);
+    const reason = data?.description ?? `код ${res.status}`;
+    console.error("feedback: Telegram отказал", reason);
+    return NextResponse.json(
+      { error: `Telegram не принял сообщение: ${reason}` },
       { status: 502 },
     );
   }
