@@ -3,6 +3,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { CharacterGrid } from "@/components/Characters";
 import { ListControls } from "@/components/ListControls";
+import { RatingControl } from "@/components/RatingControl";
 import { RecapPanel } from "@/components/RecapPanel";
 import { SeasonsList } from "@/components/SeasonsList";
 import { TitleProgress } from "@/components/TitleProgress";
@@ -137,6 +138,7 @@ export default async function TitlePage({ params }: Props) {
               {title.description}
             </p>
           )}
+          <RatingControl title={titleInfo} summary={summary} />
           <ListControls title={titleInfo} summary={summary} />
         </div>
       </section>

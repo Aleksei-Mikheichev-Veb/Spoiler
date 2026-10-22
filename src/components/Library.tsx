@@ -37,6 +37,7 @@ import {
   useLibrary,
   type Status,
 } from "@/lib/library";
+import { ratingColor } from "@/components/RatingControl";
 import { createLocalStore } from "@/lib/local-store";
 import {
   describeProgress,
@@ -52,6 +53,7 @@ interface Item extends TitleInfo {
   companies: string[];
   summary?: string;
   order: number;
+  rating?: number;
   progress?: Progress;
 }
 
@@ -168,7 +170,10 @@ export function Library() {
   const queue = items
     .filter((item) => item.status === "want")
     .sort((a, b) => a.order - b.order);
-  const done = items.filter((item) => item.status === "done");
+  // Просмотренное — сначала с высокой оценкой, без оценки — в конце
+  const done = items
+    .filter((item) => item.status === "done")
+    .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
   const dropped = items.filter((item) => item.status === "dropped");
 
   // Порядок меняем во всей очереди, даже если сейчас видна только её часть
@@ -515,6 +520,13 @@ function CardBody({
         </span>
         <span className="text-xs uppercase tracking-wide text-white/35">
           {item.isSeries ? "сериал" : "фильм"}
+          {item.rating ? (
+            <span
+              className={`ml-2 font-bold normal-case tracking-normal ${ratingColor(item.rating)}`}
+            >
+              ★ {item.rating}
+            </span>
+          ) : null}
         </span>
         {subtitle && (
           <span

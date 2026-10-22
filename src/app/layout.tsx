@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Manrope } from "next/font/google";
+import { DemoSeed } from "@/components/DemoSeed";
 import { HeaderSearch } from "@/components/HeaderSearch";
 import "./globals.css";
 
@@ -34,6 +35,7 @@ export default function RootLayout({
             <HeaderSearch />
           </div>
         </header>
+        <DemoSeed />
         <main className="mx-auto max-w-5xl px-4 py-8">{children}</main>
       </body>
     </html>

@@ -1,0 +1,129 @@
+{
+  "app": "spoiler",
+  "version": 1,
+  "exportedAt": "2026-10-22T05:53:14.127Z",
+  "progress": {
+    "1178445": {
+      "id": 1178445,
+      "name": "Эйфория",
+      "year": 2019,
+      "posterUrl": "https://cdnrrviubnyuntopbez5.svc.cdn.yandex.net/get-kinopoisk-image/4303601/d31e9b97-89ab-4502-8d01-7263d595b122/300x450",
+      "isSeries": true,
+      "season": 3,
+      "episode": 1,
+      "episodeName": "Эпизод 1",
+      "updatedAt": 1792589564252
+    },
+    "4443734": {
+      "id": 4443734,
+      "name": "Фишер",
+      "year": 2023,
+      "posterUrl": "https://cdnrrviubnyuntopbez5.svc.cdn.yandex.net/get-kinopoisk-image/10592371/6d6fb101-fb48-4874-8035-30931bc4752a/300x450",
+      "isSeries": true,
+      "season": 1,
+      "episode": 8,
+      "episodeName": "Эпизод 8",
+      "updatedAt": 1792577781172
+    },
+    "4476885": {
+      "id": 4476885,
+      "name": "Извне",
+      "year": 2022,
+      "posterUrl": "https://avatars.mds.yandex.net/get-kinopoisk-image/4303601/838ca5a2-48d7-4b32-a39a-bc723ccc88ec/300x450",
+      "isSeries": true,
+      "season": 4,
+      "episode": 1,
+      "episodeName": "The Arrival",
+      "updatedAt": 1792271183108
+    }
+  },
+  "library": {
+    "160958": {
+      "id": 160958,
+      "name": "Отчаянные домохозяйки",
+      "year": 2004,
+      "posterUrl": "https://cdnrrviubnyuntopbez5.svc.cdn.yandex.net/get-kinopoisk-image/6201401/eb3ac70c-d99d-471c-89f2-17d1b0978837/300x450",
+      "isSeries": true,
+      "status": "want",
+      "summary": "Сериал · 8 сезонов · серия ~43 мин",
+      "companies": [
+        "family",
+        "couple",
+        "me"
+      ],
+      "order": 3,
+      "updatedAt": 1792320614398
+    },
+    "404900": {
+      "id": 404900,
+      "name": "Во все тяжкие",
+      "year": 2008,
+      "posterUrl": "https://avatars.mds.yandex.net/get-kinopoisk-image/1900788/fb35416f-3b0d-4b96-bc65-cf6923f9e329/300x450",
+      "isSeries": true,
+      "status": "want",
+      "summary": "Сериал · 5 сезонов · серия ~47 мин",
+      "companies": [
+        "me"
+      ],
+      "order": 2,
+      "updatedAt": 1792320461843
+    },
+    "1178445": {
+      "id": 1178445,
+      "name": "Эйфория",
+      "year": 2019,
+      "posterUrl": "https://cdnrrviubnyuntopbez5.svc.cdn.yandex.net/get-kinopoisk-image/4303601/d31e9b97-89ab-4502-8d01-7263d595b122/300x450",
+      "isSeries": true,
+      "status": "watching",
+      "summary": "Сериал · 3 сезона · серия ~60 мин",
+      "companies": [
+        "me"
+      ],
+      "order": 4,
+      "updatedAt": 1792590193411,
+      "rating": 7
+    },
+    "4476885": {
+      "id": 4476885,
+      "name": "Извне",
+      "year": 2022,
+      "posterUrl": "https://avatars.mds.yandex.net/get-kinopoisk-image/4303601/838ca5a2-48d7-4b32-a39a-bc723ccc88ec/300x450",
+      "isSeries": true,
+      "status": "watching",
+      "summary": "Сериал · 4 сезона · серия ~52 мин",
+      "companies": [
+        "me"
+      ],
+      "order": 1,
+      "updatedAt": 1792271174735
+    },
+    "5458743": {
+      "id": 5458743,
+      "name": "Дюна: Часть третья",
+      "year": 2026,
+      "posterUrl": "https://avatars.mds.yandex.net/get-kinopoisk-image/4483445/556cc7b7-d4cc-4b12-ada6-126238fdfd8a/300x450",
+      "isSeries": false,
+      "status": "want",
+      "summary": "Фильм",
+      "companies": [
+        "me"
+      ],
+      "order": 1,
+      "updatedAt": 1792320486299
+    }
+  },
+  "companies": [
+    {
+      "id": "me",
+      "name": "Я"
+    },
+    {
+      "id": "couple",
+      "name": "Вдвоём"
+    },
+    {
+      "id": "family",
+      "name": "Всей семьёй"
+    }
+  ]
+}

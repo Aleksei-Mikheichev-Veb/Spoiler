@@ -100,3 +100,13 @@ export function describeProgress(progress: Progress): string {
   }
   return parts.join(" · ");
 }
+
+// Для резервной копии: все метки и добавление меток из файла.
+// Метки из файла заменяют метки тех же фильмов, остальные остаются.
+export function getProgressMap(): Record<string, Progress> {
+  return store.get();
+}
+
+export function mergeProgress(imported: Record<string, Progress>) {
+  store.set({ ...store.get(), ...imported });
+}

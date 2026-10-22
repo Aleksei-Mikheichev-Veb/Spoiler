@@ -1,3 +1,4 @@
+import { BackupControls } from "@/components/BackupControls";
 import { Library } from "@/components/Library";
 import { SearchForm } from "@/components/SearchForm";
 
@@ -15,6 +16,7 @@ export default function Home() {
         <SearchForm />
       </section>
       <Library />
+      <BackupControls />
     </div>
   );
 }

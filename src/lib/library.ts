@@ -32,6 +32,8 @@ export interface LibraryEntry extends TitleInfo {
   summary?: string;
   // Место в очереди «Хочу посмотреть»: меньше — раньше
   order: number;
+  // Моя оценка от 1 до 10
+  rating?: number;
   updatedAt: number;
 }
 
@@ -87,6 +89,27 @@ export function addToLibrary(
   });
 }
 
+// Оценка значит «посмотрел»: чего нет в списках — попадает в «Просмотрено»,
+// из «Хочу посмотреть» — переезжает туда же. undefined убирает оценку.
+export function setRating(
+  title: TitleInfo,
+  summary: string,
+  rating: number | undefined,
+) {
+  const current = entriesStore.get()[title.id];
+  if (!current) {
+    if (rating === undefined) return;
+    addToLibrary(title, "done", summary);
+  }
+  const status = current?.status;
+  update(title.id, {
+    rating,
+    ...(rating !== undefined && (!status || status === "want")
+      ? { status: "done" as const }
+      : {}),
+  });
+}
+
 export function setStatus(titleId: number, status: Status) {
   update(titleId, { status });
 }
@@ -133,5 +156,23 @@ export function addCompany(name: string) {
   companiesStore.set([
     ...companiesStore.get(),
     { id: `c${Date.now()}`, name },
+  ]);
+}
+
+// Для резервной копии: всё содержимое списков и добавление из файла.
+// Записи из файла заменяют записи тех же фильмов, остальные остаются.
+export function getLibraryBackup() {
+  return { library: entriesStore.get(), companies: companiesStore.get() };
+}
+
+export function mergeLibrary(
+  imported: Record<string, LibraryEntry>,
+  companies: Company[],
+) {
+  entriesStore.set({ ...entriesStore.get(), ...imported });
+  const known = new Set(companiesStore.get().map((company) => company.id));
+  companiesStore.set([
+    ...companiesStore.get(),
+    ...companies.filter((company) => !known.has(company.id)),
   ]);
 }
