@@ -86,11 +86,12 @@ export default async function TitlePage({ params }: Props) {
     isSeries: Boolean(title.isSeries),
   };
   const summary = describeLength(title, seasons, now);
+  const lengthInfo = summary.replace(/^(Сериал|Фильм)( · )?/, "");
 
   return (
     <article className="flex flex-col gap-10">
       <section className="flex flex-col gap-6 sm:flex-row">
-        <div className="relative aspect-[2/3] w-48 shrink-0 overflow-hidden rounded-2xl bg-white/5">
+        <div className="relative aspect-[2/3] w-48 shrink-0 self-start overflow-hidden rounded-2xl bg-white/5">
           {title.poster?.url && (
             <Image
               src={title.poster.url}
@@ -115,7 +116,8 @@ export default async function TitlePage({ params }: Props) {
               .filter(Boolean)
               .join(" · ")}
           </p>
-          <p className="text-sm text-white/50">{summary}</p>
+          {/* Тип уже указан строкой выше — здесь только длительность */}
+          {lengthInfo && <p className="text-sm text-white/50">{lengthInfo}</p>}
           {title.rating?.kp ? (
             <p className="text-sm">
               Кинопоиск{" "}
