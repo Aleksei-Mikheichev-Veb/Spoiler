@@ -2,7 +2,7 @@
 // Пока хранятся в браузере, как и метки.
 // Используется только из клиентских компонентов.
 import { createLocalStore } from "@/lib/local-store";
-import type { TitleInfo } from "@/lib/progress";
+import { getProgressMap, type TitleInfo } from "@/lib/progress";
 
 export type Status = "want" | "watching" | "done" | "dropped";
 
@@ -89,23 +89,26 @@ export function addToLibrary(
   });
 }
 
-// Оценка значит «посмотрел»: чего нет в списках — попадает в «Просмотрено»,
-// из «Хочу посмотреть» — переезжает туда же. undefined убирает оценку.
+// Оценка значит «смотрел»: чего нет в списках и что было в «Хочу посмотреть»,
+// попадает в «Просмотрено», а если стоит метка — в «Смотрю».
+// Остальные статусы оценка не меняет. undefined убирает оценку.
 export function setRating(
   title: TitleInfo,
   summary: string,
   rating: number | undefined,
 ) {
   const current = entriesStore.get()[title.id];
+  // Есть метка серии или времени — значит, ещё смотрит, а не досмотрел
+  const afterRating: Status = getProgressMap()[title.id] ? "watching" : "done";
   if (!current) {
     if (rating === undefined) return;
-    addToLibrary(title, "done", summary);
+    addToLibrary(title, afterRating, summary);
   }
   const status = current?.status;
   update(title.id, {
     rating,
     ...(rating !== undefined && (!status || status === "want")
-      ? { status: "done" as const }
+      ? { status: afterRating }
       : {}),
   });
 }

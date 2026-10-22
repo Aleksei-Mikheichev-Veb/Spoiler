@@ -23,3 +23,10 @@ export function proxy(request: NextRequest) {
     },
   });
 }
+
+// Картинки и служебные файлы пускаем без пароля: в них нет ничего
+// секретного, а уменьшатель картинок Next.js запрашивает фото у этого же
+// сервера без пароля — иначе браузер снова и снова спрашивал бы вход
+export const config = {
+  matcher: ["/((?!_next/static|_next/image|recaps/|favicon.ico).*)"],
+};
