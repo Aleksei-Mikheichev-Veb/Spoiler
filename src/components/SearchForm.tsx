@@ -13,12 +13,12 @@ export function SearchForm({
         name="q"
         defaultValue={defaultValue}
         placeholder={
-          compact ? "Найти фильм или сериал" : "Фильм или сериал, например «Дюна»"
+          compact ? "Найти фильм или сериал" : "Фильм или сериал"
         }
         aria-label="Поиск фильма или сериала"
         required
         className={`min-w-0 flex-1 rounded-xl border border-white/10 bg-white/5 outline-none placeholder:text-white/40 focus:border-amber-400/60 ${
-          compact ? "px-3 py-2 text-sm" : "px-4 py-3 text-base"
+          compact ? "px-3 py-2 text-base sm:text-sm" : "px-4 py-3 text-base"
         }`}
       />
       <button

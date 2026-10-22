@@ -31,6 +31,7 @@ import {
 import {
   addCompany,
   removeFromLibrary,
+  removeCompany,
   renameCompany,
   reorderQueue,
   useCompanies,
@@ -242,14 +243,14 @@ export function Library() {
       {done.length > 0 && (
         <Collapsible title="Просмотрено" count={done.length}>
           {done.map((item) => (
-            <Card key={item.id} item={item} subtitle={item.summary ?? ""} muted />
+            <Card key={item.id} item={item} subtitle={lengthOnly(item.summary)} muted />
           ))}
         </Collapsible>
       )}
       {dropped.length > 0 && (
         <Collapsible title="Бросил" count={dropped.length}>
           {dropped.map((item) => (
-            <Card key={item.id} item={item} subtitle={item.summary ?? ""} muted />
+            <Card key={item.id} item={item} subtitle={lengthOnly(item.summary)} muted />
           ))}
         </Collapsible>
       )}
@@ -273,16 +274,36 @@ function Filters() {
         </Tab>
         {companies.map((company) =>
           editing ? (
-            <input
+            <span
               key={company.id}
-              defaultValue={company.name}
-              aria-label="Название компании"
-              onBlur={(event) => {
-                const name = event.target.value.trim();
-                if (name) renameCompany(company.id, name);
-              }}
-              className="w-32 rounded-full border border-amber-400/50 bg-white/5 px-3 py-1.5 text-sm outline-none"
-            />
+              className="flex items-center rounded-full border border-amber-400/50 bg-white/5"
+            >
+              <input
+                defaultValue={company.name}
+                aria-label="Название компании"
+                onBlur={(event) => {
+                  const name = event.target.value.trim();
+                  if (name) renameCompany(company.id, name);
+                }}
+                className="w-28 bg-transparent py-1.5 pl-3 text-base outline-none sm:text-sm"
+              />
+              {companies.length > 1 && (
+                <button
+                  type="button"
+                  // Не даём полю ввода потерять фокус при нажатии: иначе оно
+                  // сохраняет название, список перерисовывается и нажатие теряется
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => {
+                    removeCompany(company.id);
+                    if (filters.company === company.id) set({ company: "all" });
+                  }}
+                  aria-label={`Удалить «${company.name}»`}
+                  className="px-3 py-1.5 text-base text-white/50 transition hover:text-red-400"
+                >
+                  ✕
+                </button>
+              )}
+            </span>
           ) : (
             <Tab
               key={company.id}
@@ -423,7 +444,7 @@ function SortableCard({ item, position }: { item: Item; position: number }) {
         ⠿
       </button>
       <span className="w-5 shrink-0 text-sm text-white/35">{position}</span>
-      <CardBody item={item} subtitle={item.summary ?? ""} />
+      <CardBody item={item} subtitle={lengthOnly(item.summary)} />
       <RemoveButton item={item} />
     </li>
   );
@@ -554,4 +575,10 @@ function RemoveButton({ item }: { item: Item }) {
       ✕
     </button>
   );
+}
+
+// «Сериал · 4 сезона · серия ~52 мин» → «4 сезона · серия ~52 мин»:
+// тип уже подписан на карточке отдельно
+function lengthOnly(summary?: string): string {
+  return (summary ?? "").replace(/^(Сериал|Фильм)( · )?/, "");
 }

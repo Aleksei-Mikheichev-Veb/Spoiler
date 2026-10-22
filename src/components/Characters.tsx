@@ -121,7 +121,7 @@ function CharacterLink({
           if (event.pointerType === "mouse") setPopover(null);
         }}
         onBlur={() => setPopover(null)}
-        className="inline cursor-help border-b border-dotted border-amber-400/70 text-inherit transition hover:text-amber-300"
+        className="inline cursor-pointer border-b border-dotted border-amber-400/70 text-inherit transition hover:text-amber-300"
       >
         {label}
       </button>
@@ -129,7 +129,7 @@ function CharacterLink({
         <div
           role="tooltip"
           style={{ top: popover.top, left: popover.left }}
-          className="pointer-events-none fixed z-50 w-72 rounded-xl border border-white/15 bg-[#17171f] p-3 shadow-2xl"
+          className="pointer-events-none fixed z-50 w-72 animate-pop-in rounded-xl border border-white/15 bg-[#17171f] p-3 shadow-2xl"
         >
           <CharacterCard entry={entry} />
         </div>
@@ -157,14 +157,14 @@ function CharacterSheet({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end bg-black/60"
+      className="fixed inset-0 z-50 flex animate-fade-in items-end bg-black/60"
       onClick={onClose}
     >
       <div
         role="dialog"
         aria-label={entry.character.name}
         onClick={(event) => event.stopPropagation()}
-        className="w-full rounded-t-2xl border-t border-white/15 bg-[#17171f] p-4 pb-8"
+        className="w-full animate-sheet-up rounded-t-2xl border-t border-white/15 bg-[#17171f] p-4 pb-8"
       >
         <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-white/20" />
         <CharacterCard entry={entry} />

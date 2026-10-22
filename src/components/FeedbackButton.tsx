@@ -80,14 +80,14 @@ function FeedbackDialog({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 sm:items-center"
+      className="fixed inset-0 z-50 flex animate-fade-in items-end justify-center bg-black/60 sm:items-center"
       onClick={onClose}
     >
       <div
         role="dialog"
         aria-label="Сообщить об ошибке"
         onClick={(event) => event.stopPropagation()}
-        className="w-full max-w-md rounded-t-2xl border border-white/15 bg-[#17171f] p-5 sm:rounded-2xl"
+        className="w-full max-w-md animate-sheet-up rounded-t-2xl border border-white/15 bg-[#17171f] p-5 sm:animate-pop-in sm:rounded-2xl"
       >
         {sent ? (
           <div className="flex flex-col gap-3 text-center">

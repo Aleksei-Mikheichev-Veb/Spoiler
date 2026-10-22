@@ -35,6 +35,8 @@ export function TimeForm({
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     if (!digits) {
+      // Пустое поле: убираем сохранённое время, если оно было
+      if (seconds === undefined) return;
       setError(false);
       setSaved(true);
       onSave(undefined);
@@ -64,18 +66,28 @@ export function TimeForm({
         placeholder="34:12"
         inputMode="numeric"
         autoComplete="off"
-        className="w-28 rounded-lg border border-white/10 bg-white/5 px-3 py-2 tabular-nums outline-none placeholder:text-white/30 focus:border-amber-400/60"
+        // 16px: иначе телефон увеличивает страницу при нажатии на поле
+        className="w-28 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-base tabular-nums outline-none placeholder:text-white/30 focus:border-amber-400/60"
       />
       <button
         type="submit"
-        className="rounded-lg border border-white/15 px-3 py-2 text-sm transition hover:border-amber-400/60"
+        // Нечего сохранять: поле пустое и времени ещё не было
+        disabled={!digits && seconds === undefined}
+        title={!digits ? "Введите время цифрами, например 3412" : undefined}
+        className={`rounded-lg border px-3 py-2 text-sm transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:active:scale-100 ${
+          saved && !error
+            ? "border-emerald-400/60 bg-emerald-400/15 text-emerald-300"
+            : "border-white/15 hover:border-amber-400/60"
+        }`}
       >
-        Сохранить
+        {saved && !error
+          ? seconds === undefined
+            ? "✓ Время убрано"
+            : "✓ Сохранено"
+          : "Сохранить"}
       </button>
-      {saved && !error && (
-        <span className="text-sm text-amber-400">
-          {seconds !== undefined ? `Запомнили ${formatTime(seconds)}` : "Готово"}
-        </span>
+      {saved && !error && seconds !== undefined && (
+        <span className="text-sm text-white/50">{formatTime(seconds)}</span>
       )}
       {error && (
         <span className="w-full text-sm text-red-400">

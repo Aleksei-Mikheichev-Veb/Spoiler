@@ -179,3 +179,21 @@ export function mergeLibrary(
     ...companies.filter((company) => !known.has(company.id)),
   ]);
 }
+
+// Удаляет компанию «с кем смотрю» и снимает её со всех фильмов.
+// Если у фильма не осталось ни одной компании — он возвращается к «Я».
+// Последнюю компанию удалить нельзя.
+export function removeCompany(companyId: string) {
+  const companies = companiesStore.get();
+  if (companies.length <= 1) return;
+  const remaining = companies.filter((company) => company.id !== companyId);
+  const fallback = remaining.some((c) => c.id === "me") ? "me" : remaining[0].id;
+  const entries = { ...entriesStore.get() };
+  for (const [id, entry] of Object.entries(entries)) {
+    if (!entry.companies.includes(companyId)) continue;
+    const left = entry.companies.filter((c) => c !== companyId);
+    entries[id] = { ...entry, companies: left.length ? left : [fallback] };
+  }
+  entriesStore.set(entries);
+  companiesStore.set(remaining);
+}
