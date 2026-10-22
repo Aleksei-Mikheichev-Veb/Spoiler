@@ -10,8 +10,8 @@ const TYPES = [
   "Другое",
 ] as const;
 
-// «Нашли ошибку?» — форма отзыва. Пока демо: сообщение никуда
-// не отправляется, позже будет уходить в Telegram.
+// «Нашли ошибку?» — форма отзыва. Отправляется в Telegram владельцу
+// через /api/feedback (токен бота хранится только на сервере).
 export function FeedbackButton({ context }: { context: string }) {
   const [open, setOpen] = useState(false);
 
@@ -40,6 +40,35 @@ function FeedbackDialog({
   const [type, setType] = useState<(typeof TYPES)[number]>(TYPES[0]);
   const [text, setText] = useState("");
   const [sent, setSent] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function send() {
+    setSending(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type,
+          text,
+          context,
+          page: window.location.href,
+        }),
+      });
+      if (res.ok) {
+        setSent(true);
+      } else {
+        const data = await res.json().catch(() => null);
+        setError(data?.error ?? "Не получилось отправить, попробуйте позже");
+      }
+    } catch {
+      setError("Нет связи с сервером, попробуйте позже");
+    } finally {
+      setSending(false);
+    }
+  }
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -64,8 +93,7 @@ function FeedbackDialog({
           <div className="flex flex-col gap-3 text-center">
             <p className="text-lg font-semibold">Спасибо!</p>
             <p className="text-sm text-white/60">
-              Мы прочитаем и поправим. (Пока это демо — сообщение никуда не
-              отправляется.)
+              Сообщение отправлено. Мы прочитаем и поправим.
             </p>
             <button
               type="button"
@@ -80,7 +108,7 @@ function FeedbackDialog({
             className="flex flex-col gap-4"
             onSubmit={(event) => {
               event.preventDefault();
-              setSent(true);
+              void send();
             }}
           >
             <div>
@@ -114,10 +142,13 @@ function FeedbackDialog({
               value={text}
               onChange={(event) => setText(event.target.value)}
               required
+              maxLength={2000}
               rows={4}
               placeholder="Что не так? Например: «Тилли погибла в 7 серии, а не в 8»"
               className="resize-none rounded-xl border border-white/10 bg-white/5 px-3 py-2 outline-none placeholder:text-white/30 focus:border-amber-400/60"
             />
+
+            {error && <p className="text-sm text-red-400">{error}</p>}
 
             <div className="flex gap-2">
               <button
@@ -129,9 +160,10 @@ function FeedbackDialog({
               </button>
               <button
                 type="submit"
-                className="flex-1 rounded-xl bg-amber-400 py-3 font-semibold text-black transition hover:bg-amber-300"
+                disabled={sending}
+                className="flex-1 rounded-xl bg-amber-400 py-3 font-semibold text-black transition hover:bg-amber-300 disabled:opacity-60"
               >
-                Отправить
+                {sending ? "Отправляем…" : "Отправить"}
               </button>
             </div>
           </form>

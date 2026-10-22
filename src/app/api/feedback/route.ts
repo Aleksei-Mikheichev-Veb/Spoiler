@@ -1,0 +1,76 @@
+// Отзыв с кнопки «Нашли ошибку?» — пересылаем его в Telegram владельцу.
+// Токен бота и id чата хранятся только на сервере (переменные окружения).
+// POST /api/feedback  { type, text, context, page }
+import { NextResponse } from "next/server";
+
+const MAX_TEXT = 2000;
+const MAX_SHORT = 300;
+
+// Защита от случайного спама: не больше 5 отзывов в минуту с одного адреса.
+// Хранится в памяти сервера — для закрытого теста этого достаточно.
+const RATE_LIMIT = 5;
+const RATE_WINDOW_MS = 60_000;
+const recent = new Map<string, number[]>();
+
+function tooMany(ip: string): boolean {
+  const now = Date.now();
+  const times = (recent.get(ip) ?? []).filter((t) => now - t < RATE_WINDOW_MS);
+  times.push(now);
+  recent.set(ip, times);
+  return times.length > RATE_LIMIT;
+}
+
+function field(value: unknown, max: number): string {
+  return typeof value === "string" ? value.trim().slice(0, max) : "";
+}
+
+export async function POST(request: Request) {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+  if (!token || !chatId) {
+    return NextResponse.json(
+      { error: "Отправка отзывов не настроена" },
+      { status: 503 },
+    );
+  }
+
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0] ?? "local";
+  if (tooMany(ip)) {
+    return NextResponse.json(
+      { error: "Слишком много отзывов подряд, попробуйте через минуту" },
+      { status: 429 },
+    );
+  }
+
+  const body: Record<string, unknown> = await request.json().catch(() => ({}));
+  const text = field(body.text, MAX_TEXT);
+  if (!text) {
+    return NextResponse.json({ error: "Пустое сообщение" }, { status: 400 });
+  }
+
+  const message = [
+    `📝 ${field(body.type, MAX_SHORT) || "Отзыв"}`,
+    field(body.context, MAX_SHORT),
+    "",
+    text,
+    "",
+    field(body.page, MAX_SHORT),
+  ]
+    .filter((line, index) => line || index === 2 || index === 4)
+    .join("\n");
+
+  const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    // Без parse_mode: текст отзыва отправляем как есть, без разметки
+    body: JSON.stringify({ chat_id: chatId, text: message }),
+  }).catch(() => null);
+
+  if (!res?.ok) {
+    return NextResponse.json(
+      { error: "Telegram не принял сообщение" },
+      { status: 502 },
+    );
+  }
+  return NextResponse.json({ ok: true });
+}
