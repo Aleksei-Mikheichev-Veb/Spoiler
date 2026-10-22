@@ -59,21 +59,30 @@ export async function POST(request: Request) {
     .filter((line, index) => line || index === 2 || index === 4)
     .join("\n");
 
-  let res: Response;
-  try {
-    res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      // Без parse_mode: текст отзыва отправляем как есть, без разметки
-      body: JSON.stringify({ chat_id: chatId.trim(), text: message }),
-      signal: AbortSignal.timeout(15_000),
-    });
-  } catch (error) {
-    // Сервер не достучался до Telegram (сеть, блокировка, таймаут)
-    const cause = (error as { cause?: { code?: string } }).cause?.code;
-    console.error("feedback: нет связи с Telegram", cause ?? error);
+  // Связь сервера с Telegram бывает нестабильной: если соединение
+  // не установилось, пробуем ещё раз (всего до трёх попыток)
+  let res: Response | null = null;
+  let lastCause = "нет ответа";
+  for (let attempt = 1; attempt <= 3 && !res; attempt++) {
+    try {
+      res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        // Без parse_mode: текст отзыва отправляем как есть, без разметки
+        body: JSON.stringify({ chat_id: chatId.trim(), text: message }),
+        signal: AbortSignal.timeout(12_000),
+      });
+    } catch (error) {
+      lastCause =
+        (error as { cause?: { code?: string } }).cause?.code ??
+        (error as Error).name;
+      console.error(`feedback: нет связи с Telegram, попытка ${attempt}`, lastCause);
+    }
+  }
+
+  if (!res) {
     return NextResponse.json(
-      { error: `Сервер не смог связаться с Telegram (${cause ?? "нет ответа"})` },
+      { error: `Сервер не смог связаться с Telegram (${lastCause})` },
       { status: 502 },
     );
   }

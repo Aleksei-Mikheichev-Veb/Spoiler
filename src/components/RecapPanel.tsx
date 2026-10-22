@@ -225,7 +225,7 @@ export function RecapPanel({
         </p>
       )}
 
-      <FeedbackButton context={`«${title.name}» · ${position}`} />
+      <FeedbackButton context={`«${title.name}»`} />
 
       <p className="text-xs text-white/35">
         Пересказ подготовлен с помощью ИИ по материалам: {recap.sources.join("; ")}.
