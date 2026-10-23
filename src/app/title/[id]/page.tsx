@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { CharacterGrid } from "@/components/Characters";
+import { FranchisePanel } from "@/components/FranchisePanel";
 import { ListControls } from "@/components/ListControls";
 import { RatingControl } from "@/components/RatingControl";
 import { RecapPanel } from "@/components/RecapPanel";
@@ -17,6 +18,7 @@ import {
   type Season,
   type Title,
 } from "@/lib/poiskkino";
+import { getFranchiseByFilm } from "@/lib/franchises";
 import { getRecap } from "@/lib/recaps";
 
 type Props = { params: Promise<{ id: string }> };
@@ -69,7 +71,7 @@ export default async function TitlePage({ params }: Props) {
   const actors = (title.persons ?? [])
     .filter((person) => person.enProfession === "actor")
     .slice(0, 12);
-  const [{ seasons, now }, roles, recap] = await Promise.all([
+  const [{ seasons, now }, roles, recap, franchise] = await Promise.all([
     loadSeasons(title),
     // Без ролей страница всё равно полезна, поэтому ошибку не пробрасываем
     getRoles(
@@ -77,6 +79,7 @@ export default async function TitlePage({ params }: Props) {
       actors.map((actor) => actor.id),
     ).catch(() => ({}) as Record<number, string>),
     title.isSeries ? getRecap(title.id) : null,
+    title.isSeries ? null : getFranchiseByFilm(title.id),
   ]);
   const titleInfo = {
     id: title.id,
@@ -161,8 +164,11 @@ export default async function TitlePage({ params }: Props) {
         />
       )}
 
-      {/* Для сериалов с нашей базой героев — список без спойлеров */}
-      {recap?.characters?.length ? (
+      {/* Фильм из киновселенной: пересказ прошлых фильмов и общие герои */}
+      {franchise ? (
+        <FranchisePanel franchise={franchise} filmId={title.id} />
+      ) : recap?.characters?.length ? (
+        /* Для сериалов с нашей базой героев — список без спойлеров */
         <CharacterGrid
           titleId={title.id}
           characters={recap.characters}

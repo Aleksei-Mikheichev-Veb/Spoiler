@@ -18,9 +18,9 @@ import type { TitleInfo } from "@/lib/progress";
 import { useRecapBoundary } from "@/lib/recap-boundary";
 import type { Recap, SeasonRecap } from "@/lib/recaps";
 
-type Level = "short" | "normal" | "detailed";
+export type Level = "short" | "normal" | "detailed";
 
-const LEVELS: { value: Level; label: string }[] = [
+export const LEVELS:{ value: Level; label: string }[] = [
   { value: "short", label: "Кратко" },
   { value: "normal", label: "Нормально" },
   { value: "detailed", label: "Подробно" },
@@ -134,28 +134,7 @@ export function RecapPanel({
         </div>
       )}
 
-      <div
-        role="tablist"
-        aria-label="Подробность пересказа"
-        className="flex w-fit gap-1 rounded-xl border border-white/10 p-1"
-      >
-        {LEVELS.map((item) => (
-          <button
-            key={item.value}
-            type="button"
-            role="tab"
-            aria-selected={level === item.value}
-            onClick={() => setLevel(item.value)}
-            className={`rounded-lg px-3 py-1.5 text-sm transition ${
-              level === item.value
-                ? "bg-amber-400 font-semibold text-black"
-                : "text-white/60 hover:text-white"
-            }`}
-          >
-            {item.label}
-          </button>
-        ))}
-      </div>
+      <LevelTabs level={level} onChange={setLevel} />
 
       {remember?.length ? (
         <div className="rounded-xl border border-amber-400/30 bg-amber-400/5 p-4">
@@ -234,7 +213,7 @@ export function RecapPanel({
   );
 }
 
-function SeasonText({
+export function SeasonText({
   season,
   level,
   known,
@@ -250,6 +229,40 @@ function SeasonText({
         <p key={index}>
           <RichText text={paragraph} known={known} />
         </p>
+      ))}
+    </div>
+  );
+}
+
+// Переключатель «Кратко / Нормально / Подробно»
+export function LevelTabs({
+  level,
+  onChange,
+}: {
+  level: Level;
+  onChange: (level: Level) => void;
+}) {
+  return (
+    <div
+      role="tablist"
+      aria-label="Подробность пересказа"
+      className="flex w-fit gap-1 rounded-xl border border-white/10 p-1"
+    >
+      {LEVELS.map((item) => (
+        <button
+          key={item.value}
+          type="button"
+          role="tab"
+          aria-selected={level === item.value}
+          onClick={() => onChange(item.value)}
+          className={`rounded-lg px-3 py-1.5 text-sm transition ${
+            level === item.value
+              ? "bg-amber-400 font-semibold text-black"
+              : "text-white/60 hover:text-white"
+          }`}
+        >
+          {item.label}
+        </button>
       ))}
     </div>
   );

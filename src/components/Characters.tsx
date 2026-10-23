@@ -263,17 +263,37 @@ export function CharacterGrid({
   now: number;
 }) {
   const { last } = useRecapBoundary(titleId, seasons, now);
+  return (
+    <CharacterList
+      characters={characters}
+      last={last}
+      hint={
+        last
+          ? "Только те, кого вы уже видели, — без спойлеров."
+          : "Главные герои первой серии. Отметьте, где остановились, — и список дополнится."
+      }
+    />
+  );
+}
+
+// Список героев, известных к моменту last (сериал или киновселенная)
+export function CharacterList({
+  characters,
+  last,
+  hint,
+}: {
+  characters: Character[];
+  last: EpisodeKey | undefined;
+  hint: string;
+}) {
   const known = [...knownCharacters(characters, last).values()];
+  if (known.length === 0) return null;
 
   return (
     <section className="flex flex-col gap-4">
       <div>
         <h2 className="text-xl font-bold">Персонажи</h2>
-        <p className="text-sm text-white/50">
-          {last
-            ? "Только те, кого вы уже видели, — без спойлеров."
-            : "Главные герои первой серии. Отметьте, где остановились, — и список дополнится."}
-        </p>
+        <p className="text-sm text-white/50">{hint}</p>
       </div>
       <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {known.map((entry) => (

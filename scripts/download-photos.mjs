@@ -1,17 +1,24 @@
-// Скачивает фото героев из data/recaps/*.json в public/recaps/.
+// Скачивает фото героев из data/recaps/*.json и data/franchises/*.json
+// в public/recaps/.
 // Сами фото в git не хранятся (на них есть авторские права) — после
 // клонирования проекта или перед выкладкой на сервер: npm run photos
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 const root = process.cwd();
-const dataDir = path.join(root, "data", "recaps");
+const dataFiles = ["recaps", "franchises"].flatMap((folder) => {
+  const dir = path.join(root, "data", folder);
+  if (!existsSync(dir)) return [];
+  return readdirSync(dir)
+    .filter((name) => name.endsWith(".json"))
+    .map((name) => path.join(dir, name));
+});
 let downloaded = 0;
 let skipped = 0;
 const failed = [];
 
-for (const file of readdirSync(dataDir).filter((name) => name.endsWith(".json"))) {
-  const recap = JSON.parse(readFileSync(path.join(dataDir, file), "utf8"));
+for (const file of dataFiles) {
+  const recap = JSON.parse(readFileSync(file, "utf8"));
   // Основное фото героя и фото из смены актёров (portraits)
   const images = (recap.characters ?? []).flatMap((character) => [
     { ...character },

@@ -6,6 +6,8 @@ import path from "node:path";
 
 export interface EpisodeRecap {
   episode: number;
+  // Название части — у фильмов из киновселенной, где «серий» нет
+  title?: string;
   text: string;
   // «Важно помнить» после этой серии: 3–6 коротких пунктов о том,
   // как обстоят дела к этому моменту
