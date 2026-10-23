@@ -1,8 +1,31 @@
 {
   "app": "spoiler",
   "version": 1,
-  "exportedAt": "2026-10-22T05:53:14.127Z",
+  "exportedAt": "2026-10-23T09:03:08.882Z",
   "progress": {
+    "404900": {
+      "id": 404900,
+      "name": "Во все тяжкие",
+      "year": 2008,
+      "posterUrl": "https://avatars.mds.yandex.net/get-kinopoisk-image/1900788/fb35416f-3b0d-4b96-bc65-cf6923f9e329/300x450",
+      "isSeries": true,
+      "season": 3,
+      "episode": 8,
+      "episodeName": "Я вижу тебя",
+      "updatedAt": 1792743891008
+    },
+    "464963": {
+      "id": 464963,
+      "name": "Игра престолов",
+      "year": 2011,
+      "posterUrl": "https://cdnrrviubnyuntopbez5.svc.cdn.yandex.net/get-kinopoisk-image/1777765/dd78edfd-6a1f-486c-9a86-6acbca940418/300x450",
+      "isSeries": true,
+      "season": 8,
+      "episode": 6,
+      "episodeName": "Железный Трон",
+      "watched": true,
+      "updatedAt": 1792743128376
+    },
     "1178445": {
       "id": 1178445,
       "name": "Эйфория",
@@ -13,6 +36,17 @@
       "episode": 1,
       "episodeName": "Эпизод 1",
       "updatedAt": 1792589564252
+    },
+    "1316601": {
+      "id": 1316601,
+      "name": "Дом Дракона",
+      "year": 2022,
+      "posterUrl": "https://cdnrrviubnyuntopbez5.svc.cdn.yandex.net/get-kinopoisk-image/10592371/e81636b8-fb18-44fb-9074-11fffe9cfc4a/300x450",
+      "isSeries": true,
+      "season": 2,
+      "episode": 1,
+      "episodeName": "Сын за сына",
+      "updatedAt": 1792742904582
     },
     "4443734": {
       "id": 4443734,
@@ -29,12 +63,35 @@
       "id": 4476885,
       "name": "Извне",
       "year": 2022,
-      "posterUrl": "https://avatars.mds.yandex.net/get-kinopoisk-image/4303601/838ca5a2-48d7-4b32-a39a-bc723ccc88ec/300x450",
+      "posterUrl": "https://cdnrrviubnyuntopbez5.svc.cdn.yandex.net/get-kinopoisk-image/4303601/838ca5a2-48d7-4b32-a39a-bc723ccc88ec/300x450",
       "isSeries": true,
       "season": 4,
       "episode": 1,
       "episodeName": "The Arrival",
-      "updatedAt": 1792271183108
+      "updatedAt": 1792745798320
+    },
+    "5024113": {
+      "id": 5024113,
+      "name": "Тёмная материя",
+      "year": 2024,
+      "posterUrl": "https://cdnrrviubnyuntopbez5.svc.cdn.yandex.net/get-kinopoisk-image/10835644/e216a222-e25b-4b99-912f-887f684d5649/300x450",
+      "isSeries": true,
+      "season": 2,
+      "episode": 1,
+      "episodeName": "Название пока неизвестно",
+      "updatedAt": 1792742572533
+    },
+    "5077277": {
+      "id": 5077277,
+      "name": "Таргет",
+      "year": 2022,
+      "posterUrl": "https://cdnrrviubnyuntopbez5.svc.cdn.yandex.net/get-kinopoisk-image/10812607/c8fa97ca-7e8c-4ea4-b419-532de5a0b121/300x450",
+      "isSeries": true,
+      "season": 2,
+      "episode": 7,
+      "episodeName": "Эпизод 7",
+      "watched": true,
+      "updatedAt": 1792736841324
     }
   },
   "library": {
@@ -51,8 +108,23 @@
         "couple",
         "me"
       ],
-      "order": 3,
+      "order": 5,
       "updatedAt": 1792320614398
+    },
+    "306084": {
+      "id": 306084,
+      "name": "Теория большого взрыва",
+      "year": 2007,
+      "posterUrl": "https://cdnrrviubnyuntopbez5.svc.cdn.yandex.net/get-kinopoisk-image/1629390/5067dbe3-760d-45b6-826d-f22a283d408b/300x450",
+      "isSeries": true,
+      "status": "done",
+      "summary": "Сериал · 12 сезонов · серия ~22 мин",
+      "companies": [
+        "me"
+      ],
+      "order": 8,
+      "updatedAt": 1792742212533,
+      "rating": 10
     },
     "404900": {
       "id": 404900,
@@ -65,8 +137,70 @@
       "companies": [
         "me"
       ],
-      "order": 2,
-      "updatedAt": 1792320461843
+      "order": 3,
+      "updatedAt": 1792743971429,
+      "rating": 10
+    },
+    "409424": {
+      "id": 409424,
+      "name": "Дюна",
+      "year": 2021,
+      "posterUrl": "https://avatars.mds.yandex.net/get-kinopoisk-image/4303601/9eb762d6-4cdd-464f-9937-aebf30067acc/300x450",
+      "isSeries": false,
+      "status": "done",
+      "summary": "Фильм · 2 ч 35 мин",
+      "companies": [
+        "me"
+      ],
+      "order": 10,
+      "updatedAt": 1792742480197,
+      "rating": 10
+    },
+    "464963": {
+      "id": 464963,
+      "name": "Игра престолов",
+      "year": 2011,
+      "posterUrl": "https://avatars.mds.yandex.net/get-kinopoisk-image/1777765/dd78edfd-6a1f-486c-9a86-6acbca940418/300x450",
+      "isSeries": true,
+      "status": "done",
+      "summary": "Сериал · 8 сезонов · серия ~55 мин",
+      "companies": [
+        "me"
+      ],
+      "order": 5,
+      "updatedAt": 1792743134138,
+      "rating": 10
+    },
+    "502838": {
+      "id": 502838,
+      "name": "Шерлок",
+      "year": 2010,
+      "posterUrl": "https://avatars.mds.yandex.net/get-kinopoisk-image/1629390/f28c1ea2-47b0-49d5-b11c-9608744f0233/300x450",
+      "isSeries": true,
+      "status": "done",
+      "summary": "Сериал · 4 сезона · серия ~90 мин",
+      "companies": [
+        "me",
+        "couple"
+      ],
+      "order": 7,
+      "updatedAt": 1792742083192,
+      "rating": 10
+    },
+    "915196": {
+      "id": 915196,
+      "name": "Очень странные дела",
+      "year": 2016,
+      "posterUrl": "https://cdnrrviubnyuntopbez5.svc.cdn.yandex.net/get-kinopoisk-image/10703859/1e653cad-c84f-4617-b61e-949b3228ef36/300x450",
+      "isSeries": true,
+      "status": "done",
+      "summary": "Сериал · 5 сезонов",
+      "companies": [
+        "me"
+      ],
+      "order": 9,
+      "updatedAt": 1792742283780,
+      "rating": 10
     },
     "1178445": {
       "id": 1178445,
@@ -83,19 +217,94 @@
       "updatedAt": 1792590193411,
       "rating": 7
     },
+    "1316601": {
+      "id": 1316601,
+      "name": "Дом Дракона",
+      "year": 2022,
+      "posterUrl": "https://cdnrrviubnyuntopbez5.svc.cdn.yandex.net/get-kinopoisk-image/10592371/e81636b8-fb18-44fb-9074-11fffe9cfc4a/300x450",
+      "isSeries": true,
+      "status": "dropped",
+      "summary": "Сериал · 3 сезона · серия ~60 мин",
+      "companies": [
+        "me"
+      ],
+      "order": 16,
+      "updatedAt": 1792742930849
+    },
+    "4443734": {
+      "id": 4443734,
+      "name": "Фишер",
+      "year": 2023,
+      "posterUrl": "https://cdnrrviubnyuntopbez5.svc.cdn.yandex.net/get-kinopoisk-image/10592371/6d6fb101-fb48-4874-8035-30931bc4752a/300x450",
+      "isSeries": true,
+      "status": "watching",
+      "summary": "Сериал · 3 сезона · серия ~60 мин",
+      "companies": [
+        "me"
+      ],
+      "order": 17,
+      "updatedAt": 1792743093849,
+      "rating": 9
+    },
     "4476885": {
       "id": 4476885,
       "name": "Извне",
       "year": 2022,
       "posterUrl": "https://avatars.mds.yandex.net/get-kinopoisk-image/4303601/838ca5a2-48d7-4b32-a39a-bc723ccc88ec/300x450",
       "isSeries": true,
-      "status": "watching",
+      "status": "want",
       "summary": "Сериал · 4 сезона · серия ~52 мин",
       "companies": [
         "me"
       ],
-      "order": 1,
-      "updatedAt": 1792271174735
+      "order": 2,
+      "updatedAt": 1792745814297,
+      "rating": 10
+    },
+    "4540126": {
+      "id": 4540126,
+      "name": "Дюна: Часть вторая",
+      "year": 2024,
+      "posterUrl": "https://cdnrrviubnyuntopbez5.svc.cdn.yandex.net/get-kinopoisk-image/10953618/20f20a76-e8d8-4b04-9041-1f044d87e55a/300x450",
+      "isSeries": false,
+      "status": "done",
+      "summary": "Фильм · 2 ч 46 мин",
+      "companies": [
+        "me"
+      ],
+      "order": 11,
+      "updatedAt": 1792742500931,
+      "rating": 9
+    },
+    "5024113": {
+      "id": 5024113,
+      "name": "Тёмная материя",
+      "year": 2024,
+      "posterUrl": "https://cdnrrviubnyuntopbez5.svc.cdn.yandex.net/get-kinopoisk-image/10835644/e216a222-e25b-4b99-912f-887f684d5649/300x450",
+      "isSeries": true,
+      "status": "watching",
+      "summary": "Сериал · 2 сезона · серия ~50 мин",
+      "companies": [
+        "me"
+      ],
+      "order": 12,
+      "updatedAt": 1792742583094,
+      "rating": 8
+    },
+    "5437614": {
+      "id": 5437614,
+      "name": "Майкл",
+      "year": 2026,
+      "posterUrl": "https://cdnrrviubnyuntopbez5.svc.cdn.yandex.net/get-kinopoisk-image/4486362/a4a9fe57-d119-4d84-b326-2e9b70087bc8/300x450",
+      "isSeries": false,
+      "status": "done",
+      "summary": "Фильм · 2 ч 10 мин",
+      "companies": [
+        "me"
+      ],
+      "order": 15,
+      "updatedAt": 1792742687652,
+      "rating": 7
     },
     "5458743": {
       "id": 5458743,
@@ -110,6 +319,78 @@
       ],
       "order": 1,
       "updatedAt": 1792320486299
+    },
+    "5463792": {
+      "id": 5463792,
+      "name": "Хищник: Планета смерти",
+      "year": 2025,
+      "posterUrl": "https://cdnrrviubnyuntopbez5.svc.cdn.yandex.net/get-kinopoisk-image/10893610/860868ef-851a-45ed-875a-86e3744ba694/300x450",
+      "isSeries": false,
+      "status": "want",
+      "summary": "Фильм · 1 ч 48 мин",
+      "companies": [
+        "me"
+      ],
+      "order": 6,
+      "updatedAt": 1792745518286
+    },
+    "6375814": {
+      "id": 6375814,
+      "name": "Людвиг",
+      "year": 2024,
+      "posterUrl": "https://cdnrrviubnyuntopbez5.svc.cdn.yandex.net/get-kinopoisk-image/4486454/f083e76a-7944-49c4-bb96-62dbe723f3f6/300x450",
+      "isSeries": true,
+      "status": "want",
+      "summary": "Сериал · 2 сезона",
+      "companies": [
+        "me"
+      ],
+      "order": 4,
+      "updatedAt": 1792735925774
+    },
+    "6459560": {
+      "id": 6459560,
+      "name": "Опасный дуэт",
+      "year": 2026,
+      "posterUrl": "https://cdnrrviubnyuntopbez5.svc.cdn.yandex.net/get-kinopoisk-image/10671298/7c0d38c2-9448-4935-bda4-c36c91c85a3a/300x450",
+      "isSeries": false,
+      "status": "done",
+      "summary": "Фильм · 2 ч 4 мин",
+      "companies": [
+        "me"
+      ],
+      "order": 13,
+      "updatedAt": 1792742610320,
+      "rating": 7
+    },
+    "7378605": {
+      "id": 7378605,
+      "name": "Обитель зла",
+      "year": 2026,
+      "posterUrl": "https://avatars.mds.yandex.net/get-kinopoisk-image/10809116/3fd06fd1-3942-451a-8ec7-e52d8e88ed3d/300x450",
+      "isSeries": false,
+      "status": "want",
+      "summary": "Фильм · 1 ч 34 мин",
+      "companies": [
+        "me"
+      ],
+      "order": 7,
+      "updatedAt": 1792745563871
+    },
+    "7421341": {
+      "id": 7421341,
+      "name": "Коммерсант",
+      "year": 2025,
+      "posterUrl": "https://cdnrrviubnyuntopbez5.svc.cdn.yandex.net/get-kinopoisk-image/10703859/73fd90c6-30d5-4765-b088-d15704dc08df/300x450",
+      "isSeries": false,
+      "status": "done",
+      "summary": "Фильм · 1 ч 36 мин",
+      "companies": [
+        "me"
+      ],
+      "order": 14,
+      "updatedAt": 1792742663494,
+      "rating": 8
     }
   },
   "companies": [
