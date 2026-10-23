@@ -30,6 +30,13 @@ export interface CharacterSnapshot {
   text: string;
 }
 
+export interface Portrait {
+  from: [season: number, episode: number];
+  actor: string;
+  photo?: string;
+  photoSource?: string;
+}
+
 export interface Character {
   // В текстах пересказа упоминания размечены как [[id|словоформа]]
   id: string;
@@ -39,6 +46,9 @@ export interface Character {
   // С какой серии можно показывать фото и актёра. Нужно для тайных
   // злодеев: лицо и имя актёра выдают, кто убийца
   revealFrom?: [season: number, episode: number];
+  // Смена актёра по ходу сериала (например, после скачка во времени
+  // юную героиню играет другая актриса). Действует с серии from
+  portraits?: Portrait[];
   about: CharacterSnapshot[];
 }
 

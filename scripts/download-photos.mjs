@@ -12,7 +12,16 @@ const failed = [];
 
 for (const file of readdirSync(dataDir).filter((name) => name.endsWith(".json"))) {
   const recap = JSON.parse(readFileSync(path.join(dataDir, file), "utf8"));
-  for (const character of recap.characters ?? []) {
+  // Основное фото героя и фото из смены актёров (portraits)
+  const images = (recap.characters ?? []).flatMap((character) => [
+    { ...character },
+    ...(character.portraits ?? []).map((portrait) => ({
+      id: `${character.id} (${portrait.actor})`,
+      photo: portrait.photo,
+      photoSource: portrait.photoSource,
+    })),
+  ]);
+  for (const character of images) {
     if (!character.photo || !character.photoSource) continue;
     const target = path.join(root, "public", character.photo);
     if (existsSync(target)) {

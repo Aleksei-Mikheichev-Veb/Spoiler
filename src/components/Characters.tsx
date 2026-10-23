@@ -28,11 +28,19 @@ export function knownCharacters(
     const hidden = Boolean(
       character.revealFrom && (!last || isAfter(character.revealFrom, last)),
     );
+    // Если актёр сменился по ходу сериала — берём того, кто играет сейчас
+    const boundary: EpisodeKey = last ?? [1, 1];
+    const portrait = character.portraits
+      ?.filter((item) => !isAfter(item.from, boundary))
+      .at(-1);
+    const current = portrait
+      ? { ...character, actor: portrait.actor, photo: portrait.photo }
+      : character;
     known.set(character.id, {
       // Фото и актёра убираем прямо из данных, чтобы они не попали в разметку
       character: hidden
-        ? { ...character, photo: undefined, actor: undefined }
-        : character,
+        ? { ...current, photo: undefined, actor: undefined }
+        : current,
       text: snapshot.text,
       hidden,
     });
