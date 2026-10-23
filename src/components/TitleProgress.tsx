@@ -10,6 +10,7 @@ import {
   isAfter,
   type EpisodeKey,
 } from "@/lib/episodes";
+import { markAsWatching } from "@/lib/library";
 import type { Season } from "@/lib/poiskkino";
 import {
   removeProgress,
@@ -23,12 +24,20 @@ export function TitleProgress({
   title,
   seasons,
   now,
+  summary,
 }: {
   title: TitleInfo;
   seasons: Season[];
   now: number;
+  // «Сериал · 4 сезона · …» — подпись для списков
+  summary: string;
 }) {
   const progress = useProgress(title.id);
+  // Сохранить метку и отметить сериал в списках как «Смотрю»
+  const saveMark = (mark: Parameters<typeof saveProgress>[1]) => {
+    saveProgress(title, mark);
+    markAsWatching(title, summary);
+  };
   const aired = airedEpisodes(seasons, now);
   const mark: EpisodeKey | null =
     progress?.season && progress?.episode
@@ -72,7 +81,7 @@ export function TitleProgress({
             <button
               type="button"
               onClick={() =>
-                saveProgress(title, {
+                saveMark({
                   season: newer[0][0],
                   episode: newer[0][1],
                   episodeName: episodeName(seasons, newer[0]),
@@ -86,7 +95,7 @@ export function TitleProgress({
         ) : (
           <p className="text-white/60">
             <span className="font-semibold text-white/80">
-              {describeUpcoming(findUpcoming(seasons, now, mark), now)}
+              {describeUpcoming(findUpcoming(seasons, now, mark), now, mark[0])}
             </span>
             . Когда выйдут новые серии — покажем на главной.
           </p>
@@ -120,7 +129,7 @@ export function TitleProgress({
         key={mark ? mark.join("-") : "movie"}
         seconds={progress?.seconds}
         onSave={(seconds) =>
-          saveProgress(title, {
+          saveMark({
             season: progress?.season,
             episode: progress?.episode,
             episodeName: progress?.episodeName,

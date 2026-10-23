@@ -7,6 +7,7 @@ export type EpisodeKey = [season: number, episode: number];
 // Следующий сезон после метки: когда выйдет (если известно)
 export interface Upcoming {
   season: number;
+  episode: number;
   airDate?: string;
 }
 
@@ -59,7 +60,11 @@ export function findUpcoming(
     for (const episode of season.episodes ?? []) {
       const key: EpisodeKey = [season.number, episode.number];
       if (isAfter(key, after) && !isAired(season.number, episode)) {
-        return { season: season.number, airDate: episode.airDate };
+        return {
+          season: season.number,
+          episode: episode.number,
+          airDate: episode.airDate,
+        };
       }
     }
   }
@@ -67,14 +72,20 @@ export function findUpcoming(
 }
 
 // «Ждём 2 сезон · выйдет 12 ноября» / «· дата пока неизвестна»
+// currentSeason — сезон, на котором человек сейчас: если следующая серия
+// в нём же, ждём не новый сезон, а следующую серию
 export function describeUpcoming(
   upcoming: Upcoming | undefined,
   now: number,
+  currentSeason?: number,
 ): string {
   if (!upcoming) return "Новый сезон пока не анонсирован";
   const when = upcoming.airDate
     ? `выйдет ${formatAirDate(upcoming.airDate, now)}`
     : "дата пока неизвестна";
+  if (upcoming.season === currentSeason) {
+    return `Следующая серия ${upcoming.episode} · ${when}`;
+  }
   return `Анонсирован ${upcoming.season} сезон · ${when}`;
 }
 

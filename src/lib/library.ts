@@ -197,3 +197,27 @@ export function removeCompany(companyId: string) {
   entriesStore.set(entries);
   companiesStore.set(remaining);
 }
+
+// Поставил метку — значит, смотрит: сериал попадает в «Смотрю».
+// Из «Хочу посмотреть» и «Бросил» переезжает туда же; «Просмотрено» не трогаем —
+// человек мог начать пересматривать.
+export function markAsWatching(title: TitleInfo, summary?: string) {
+  const current = entriesStore.get()[title.id];
+  if (!current) {
+    addToLibrary(title, "watching", summary);
+  } else if (current.status === "want" || current.status === "dropped") {
+    update(title.id, { status: "watching" });
+  }
+}
+
+// «В очередь»: начатый, но отложенный сериал (или фильм) уходит в конец
+// очереди «Хочу посмотреть». Метка серии при этом остаётся.
+export function moveToQueue(title: TitleInfo, summary?: string) {
+  const entries = entriesStore.get();
+  const lastOrder = Math.max(0, ...Object.values(entries).map((e) => e.order));
+  if (!entries[title.id]) {
+    addToLibrary(title, "want", summary);
+    return;
+  }
+  update(title.id, { status: "want", order: lastOrder + 1 });
+}

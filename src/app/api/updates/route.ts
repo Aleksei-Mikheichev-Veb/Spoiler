@@ -1,11 +1,12 @@
-// Какие серии уже вышли у сериалов из библиотеки пользователя
-// и какой сезон анонсирован следующим.
-// Главная спрашивает это, чтобы показать «Вышел новый сезон».
+// Какие серии уже вышли у сериалов из библиотеки пользователя,
+// какой сезон анонсирован следующим и расписание ближайших серий.
+// Главная спрашивает это для «Вышло новое» и календаря серий.
 // GET /api/updates?ids=1032606,749562 →
-// { now, titles: { "749562": { aired: [[1,1],...], upcoming: { season: 2 } } } }
+// { now, titles: { "749562": { aired, upcoming, schedule } } }
 import { NextResponse } from "next/server";
 import {
   airedEpisodes,
+  displayEpisodeName,
   findUpcoming,
   type EpisodeKey,
   type Upcoming,
@@ -13,10 +14,22 @@ import {
 import { getSeasons } from "@/lib/poiskkino";
 
 const MAX_IDS = 50;
+const DAY = 24 * 60 * 60 * 1000;
+// Календарь: серии, вышедшие за последнюю неделю, и выходящие в ближайшие 60 дней
+const CALENDAR_PAST = 7 * DAY;
+const CALENDAR_FUTURE = 60 * DAY;
+
+export interface ScheduledEpisode {
+  season: number;
+  episode: number;
+  name: string;
+  airDate: string;
+}
 
 export interface TitleUpdates {
   aired: EpisodeKey[];
   upcoming?: Upcoming;
+  schedule: ScheduledEpisode[];
 }
 
 export interface UpdatesResponse {
@@ -41,9 +54,24 @@ export async function GET(request: Request) {
       try {
         const seasons = await getSeasons(id);
         const aired = airedEpisodes(seasons, now);
+        const schedule = seasons.flatMap((season) =>
+          (season.episodes ?? [])
+            .filter((episode) => {
+              if (!episode.airDate) return false;
+              const time = Date.parse(episode.airDate);
+              return time >= now - CALENDAR_PAST && time <= now + CALENDAR_FUTURE;
+            })
+            .map((episode) => ({
+              season: season.number,
+              episode: episode.number,
+              name: displayEpisodeName(episode),
+              airDate: episode.airDate!,
+            })),
+        );
         titles[id] = {
           aired,
           upcoming: findUpcoming(seasons, now, aired.at(-1) ?? [0, 0]),
+          schedule,
         };
       } catch {
         // Один сломанный сериал не должен ломать остальные

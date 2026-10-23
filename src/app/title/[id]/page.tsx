@@ -145,7 +145,12 @@ export default async function TitlePage({ params }: Props) {
         </div>
       </section>
 
-      <TitleProgress title={titleInfo} seasons={seasons} now={now} />
+      <TitleProgress
+        title={titleInfo}
+        seasons={seasons}
+        now={now}
+        summary={summary}
+      />
 
       {recap && (
         <RecapPanel
@@ -200,7 +205,12 @@ export default async function TitlePage({ params }: Props) {
       {seasons.length > 0 && (
         <section className="flex flex-col gap-4">
           <h2 className="text-xl font-bold">Сезоны и серии</h2>
-          <SeasonsList title={titleInfo} seasons={seasons} now={now} />
+          <SeasonsList
+            title={titleInfo}
+            seasons={seasons}
+            now={now}
+            summary={summary}
+          />
         </section>
       )}
     </article>

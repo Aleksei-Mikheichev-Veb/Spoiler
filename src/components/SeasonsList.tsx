@@ -10,6 +10,7 @@ import {
   displayEpisodeName,
   type EpisodeKey,
 } from "@/lib/episodes";
+import { markAsWatching } from "@/lib/library";
 import { saveProgress, useProgress, type TitleInfo } from "@/lib/progress";
 import type { Season } from "@/lib/poiskkino";
 
@@ -18,14 +19,22 @@ export function SeasonsList({
   title,
   seasons,
   now,
+  summary,
 }: {
   title: TitleInfo;
   seasons: Season[];
   // Время рендера на сервере — чтобы сервер и браузер одинаково
   // решили, какие серии уже вышли
   now: number;
+  // «Сериал · 4 сезона · …» — подпись для списков
+  summary: string;
 }) {
   const progress = useProgress(title.id);
+  // Сохранить метку и отметить сериал в списках как «Смотрю»
+  const saveMark = (mark: Parameters<typeof saveProgress>[1]) => {
+    saveProgress(title, mark);
+    markAsWatching(title, summary);
+  };
   const mark: EpisodeKey | null =
     progress?.season && progress?.episode
       ? [progress.season, progress.episode]
@@ -46,7 +55,7 @@ export function SeasonsList({
   }
 
   function markEpisode(key: EpisodeKey) {
-    saveProgress(title, {
+    saveMark({
       season: key[0],
       episode: key[1],
       episodeName: episodeName(seasons, key),
@@ -60,7 +69,7 @@ export function SeasonsList({
     if (next) {
       markEpisode(next);
     } else {
-      saveProgress(title, {
+      saveMark({
         season: current[0],
         episode: current[1],
         episodeName: episodeName(seasons, current),
@@ -115,7 +124,7 @@ export function SeasonsList({
                       <TimeForm
                         seconds={progress.seconds}
                         onSave={(seconds) =>
-                          saveProgress(title, {
+                          saveMark({
                             season: key[0],
                             episode: key[1],
                             episodeName: name,

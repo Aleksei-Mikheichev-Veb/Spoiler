@@ -30,6 +30,7 @@ import {
 } from "@/lib/episodes";
 import {
   addCompany,
+  moveToQueue,
   removeFromLibrary,
   removeCompany,
   renameCompany,
@@ -38,6 +39,7 @@ import {
   useLibrary,
   type Status,
 } from "@/lib/library";
+import { EpisodeCalendar } from "@/components/EpisodeCalendar";
 import { ratingColor } from "@/components/RatingControl";
 import { createLocalStore } from "@/lib/local-store";
 import {
@@ -76,8 +78,9 @@ function useItems(): Item[] {
     const progress = progressById.get(entry.id);
     items.set(entry.id, {
       ...entry,
-      // Поставил метку — значит, уже смотрит
-      status: entry.status === "want" && progress ? "watching" : entry.status,
+      // Статус — как выбрал человек. Метка сама переводит в «Смотрю»
+      // (markAsWatching), а «В очередь» может отложить начатый сериал
+      status: entry.status,
       progress,
     });
   }
@@ -96,12 +99,13 @@ function useItems(): Item[] {
   return [...items.values()];
 }
 
-// Новые серии проверяем только у досмотренных сериалов
+// Новые серии и расписание — для всех сериалов, кроме брошенных
 function useUpdates(items: Item[]): UpdatesResponse | null {
   const [updates, setUpdates] = useState<UpdatesResponse | null>(null);
   const idsKey = items
-    .filter((item) => item.status === "watching" && item.progress?.watched)
+    .filter((item) => item.isSeries && item.status !== "dropped")
     .map((item) => item.id)
+    .sort((a, b) => a - b)
     .join(",");
 
   useEffect(() => {
@@ -154,7 +158,7 @@ export function Library() {
         waiting.push({
           item,
           text: updates
-            ? describeUpcoming(info?.upcoming, updates.now)
+            ? describeUpcoming(info?.upcoming, updates.now, mark[0])
             : `Досмотрено до сезона ${mark[0]}, серии ${mark[1]}`,
         });
       }
@@ -215,10 +219,29 @@ export function Library() {
           ))}
         </Section>
       )}
+      <EpisodeCalendar
+        titles={items.filter((item) => item.isSeries && item.status !== "dropped")}
+        updates={updates}
+      />
       {continuing.length > 0 && (
         <Section title="Смотрю">
           {continuing.map(({ item, text }) => (
-            <Card key={item.id} item={item} subtitle={text} />
+            <Card
+              key={item.id}
+              item={item}
+              subtitle={text}
+              action={
+                // Начал, но сейчас не смотрит — отложить в очередь, метка останется
+                <button
+                  type="button"
+                  onClick={() => moveToQueue(item, item.summary)}
+                  title="Отложить в очередь — метка сохранится"
+                  className="shrink-0 rounded-lg border border-white/15 px-2.5 py-1.5 text-xs text-white/60 transition hover:border-amber-400/60 hover:text-white"
+                >
+                  В очередь
+                </button>
+              }
+            />
           ))}
         </Section>
       )}
@@ -230,21 +253,60 @@ export function Library() {
               Порядок меняется перетаскиванием за ⠿
             </p>
           </div>
-          <QueueList items={queue} onDragEnd={handleQueueDrag} />
+          {/* Фильмы и сериалы — отдельными очередями */}
+          {(
+            [
+              ["Фильмы", queue.filter((item) => !item.isSeries)],
+              ["Сериалы", queue.filter((item) => item.isSeries)],
+            ] as const
+          ).map(
+            ([label, group]) =>
+              group.length > 0 && (
+                <div key={label} className="flex flex-col gap-2">
+                  <h3 className="text-sm font-semibold uppercase tracking-wide text-white/40">
+                    {label} <span className="font-normal">{group.length}</span>
+                  </h3>
+                  <QueueList items={[...group]} onDragEnd={handleQueueDrag} />
+                </div>
+              ),
+          )}
         </section>
       )}
       {waiting.length > 0 && (
-        <Section title="Ждём новый сезон">
+        <Section title="Ждём продолжения">
           {waiting.map(({ item, text }) => (
             <Card key={item.id} item={item} subtitle={text} muted />
           ))}
         </Section>
       )}
       {done.length > 0 && (
-        <Collapsible title="Просмотрено" count={done.length}>
-          {done.map((item) => (
-            <Card key={item.id} item={item} subtitle={lengthOnly(item.summary)} muted />
-          ))}
+        <Collapsible title="Просмотрено" count={done.length} defaultOpen>
+          {/* Фильмы и сериалы отдельно, в каждом — лучшие оценки сверху */}
+          {(
+            [
+              ["Фильмы", done.filter((item) => !item.isSeries)],
+              ["Сериалы", done.filter((item) => item.isSeries)],
+            ] as const
+          ).map(
+            ([label, group]) =>
+              group.length > 0 && (
+                <li key={label} className="flex flex-col gap-3 sm:col-span-2">
+                  <h3 className="text-sm font-semibold uppercase tracking-wide text-white/40">
+                    {label} <span className="font-normal">{group.length}</span>
+                  </h3>
+                  <ul className="grid gap-3 sm:grid-cols-2">
+                    {group.map((item) => (
+                      <Card
+                        key={item.id}
+                        item={item}
+                        subtitle={lengthOnly(item.summary)}
+                        muted
+                      />
+                    ))}
+                  </ul>
+                </li>
+              ),
+          )}
         </Collapsible>
       )}
       {dropped.length > 0 && (
@@ -444,7 +506,16 @@ function SortableCard({ item, position }: { item: Item; position: number }) {
         ⠿
       </button>
       <span className="w-5 shrink-0 text-sm text-white/35">{position}</span>
-      <CardBody item={item} subtitle={lengthOnly(item.summary)} />
+      <CardBody
+        item={item}
+        // Начатый, но отложенный — показываем, откуда продолжать
+        subtitle={
+          item.progress
+            ? `Продолжить: ${describeProgress(item.progress) || "метка без времени"}`
+            : lengthOnly(item.summary)
+        }
+        accent={Boolean(item.progress)}
+      />
       <RemoveButton item={item} />
     </li>
   );
@@ -468,14 +539,16 @@ function Section({
 function Collapsible({
   title,
   count,
+  defaultOpen = false,
   children,
 }: {
   title: string;
   count: number;
+  defaultOpen?: boolean;
   children: React.ReactNode;
 }) {
   return (
-    <details className="group">
+    <details className="group" open={defaultOpen || undefined}>
       <summary className="text-xl font-bold">
         {title} <span className="font-normal text-white/40">{count}</span>
       </summary>
@@ -489,19 +562,24 @@ function Card({
   subtitle,
   highlight = false,
   muted = false,
+  action,
 }: {
   item: Item;
   subtitle: string;
   highlight?: boolean;
+  // Серая подпись вместо жёлтой — для того, что не «смотрю прямо сейчас»
   muted?: boolean;
+  // Дополнительная кнопка справа, например «В очередь»
+  action?: React.ReactNode;
 }) {
   return (
     <li
       className={`flex items-center gap-3 rounded-xl border p-3 ${
         highlight ? "border-amber-400/50 bg-amber-400/5" : "border-white/10"
-      } ${muted ? "opacity-70" : ""}`}
+      }`}
     >
       <CardBody item={item} subtitle={subtitle} accent={!muted} />
+      {action}
       <RemoveButton item={item} />
     </li>
   );
