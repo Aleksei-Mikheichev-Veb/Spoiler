@@ -20,7 +20,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import type { UpdatesResponse } from "@/app/api/updates/route";
 import {
   describeNewEpisodes,
@@ -41,6 +41,7 @@ import {
 } from "@/lib/library";
 import { EpisodeCalendar } from "@/components/EpisodeCalendar";
 import { ratingColor } from "@/components/RatingControl";
+import { onTab, type HomeTab } from "@/lib/home-tab";
 import { createLocalStore } from "@/lib/local-store";
 import {
   describeProgress,
@@ -67,6 +68,21 @@ const filtersStore = createLocalStore<{ company: string; kind: Kind }>(
   "spoiler:home-filters",
   { company: "all", kind: "all" },
 );
+
+// Какие разделы свёрнуты или раскрыты вопреки умолчанию — тоже запоминаем
+const foldStore = createLocalStore<Record<string, boolean>>(
+  "spoiler:home-folds",
+  {},
+);
+
+function useFold(id: string, defaultOpen: boolean) {
+  const open = foldStore.use()[id] ?? defaultOpen;
+  function setOpen(value: boolean) {
+    if (value === open) return;
+    foldStore.set({ ...foldStore.get(), [id]: value });
+  }
+  return [open, setOpen] as const;
+}
 
 function useItems(): Item[] {
   const library = useLibrary();
@@ -127,19 +143,57 @@ function useUpdates(items: Item[]): UpdatesResponse | null {
   return updates;
 }
 
-// Мои списки на главной
-export function Library() {
+// Вкладка «Списки» на телефоне: какой список открыт
+type ListTab = "queue" | "done" | "dropped";
+const listTabStore = createLocalStore<ListTab>("spoiler:home-list", "queue");
+
+const subscribeNothing = () => () => {};
+
+// Большое приветствие с поиском. На телефоне показываем его только
+// новичкам с пустыми списками — остальным оно занимает весь экран
+export function HomeHero({
+  tab,
+  children,
+}: {
+  tab: HomeTab;
+  children: React.ReactNode;
+}) {
+  const hasItems = useItems().length > 0;
+  // Пока браузер не прочитал списки, не знаем, пустые ли они
+  const hydrated = useSyncExternalStore(
+    subscribeNothing,
+    () => true,
+    () => false,
+  );
+  const showOnPhone = tab === "now" && hydrated && !hasItems;
+  return (
+    <div className={showOnPhone ? "contents" : "hidden sm:contents"}>
+      {children}
+    </div>
+  );
+}
+
+// Мои списки на главной. На телефоне разложены по вкладкам
+// нижней панели, на компьютере — всё одной страницей
+export function Library({ tab }: { tab: HomeTab }) {
   const allItems = useItems();
   const updates = useUpdates(allItems);
   const filters = filtersStore.use();
+  const listTab = listTabStore.use();
 
-  if (allItems.length === 0) return null;
+  if (allItems.length === 0) {
+    return tab === "lists" ? (
+      <p className="text-white/50 sm:hidden">
+        Здесь пока пусто. Найдите фильм или сериал во вкладке «Поиск» и нажмите
+        «В мои списки».
+      </p>
+    ) : null;
+  }
 
   const items = allItems.filter(
     (item) =>
       (filters.company === "all" || item.companies.includes(filters.company)) &&
-      (filters.kind === "all" ||
-        (filters.kind === "series") === item.isSeries),
+      (filters.kind === "all" || (filters.kind === "series") === item.isSeries),
   );
 
   const fresh: { item: Item; text: string }[] = [];
@@ -148,7 +202,12 @@ export function Library() {
 
   for (const item of items.filter((i) => i.status === "watching")) {
     const progress = item.progress;
-    if (item.isSeries && progress?.watched && progress.season && progress.episode) {
+    if (
+      item.isSeries &&
+      progress?.watched &&
+      progress.season &&
+      progress.episode
+    ) {
       const mark: EpisodeKey = [progress.season, progress.episode];
       const info = updates?.titles[item.id];
       const newer = (info?.aired ?? []).filter((key) => isAfter(key, mark));
@@ -199,123 +258,224 @@ export function Library() {
   }
 
   const isEmpty =
-    fresh.length + continuing.length + waiting.length + queue.length +
-      done.length + dropped.length === 0;
+    fresh.length +
+      continuing.length +
+      waiting.length +
+      queue.length +
+      done.length +
+      dropped.length ===
+    0;
+
+  // Блок списка: на телефоне виден только на вкладке «Списки»
+  // и только когда выбран именно он
+  const onList = (list: ListTab) =>
+    tab === "lists" && listTab === list ? "contents" : "hidden sm:contents";
+  const listCounts: Record<ListTab, number> = {
+    queue: queue.length,
+    done: done.length,
+    dropped: dropped.length,
+  };
+  const nowEmpty = fresh.length + continuing.length + waiting.length === 0;
 
   return (
     <div className="flex flex-col gap-8">
-      <Filters />
+      <div className={onTab(tab, "now", "lists")}>
+        <Filters />
+      </div>
 
-      {isEmpty && (
+      {isEmpty && tab !== "more" && (
         <p className="text-white/50">
           Здесь пока пусто. Найдите фильм или сериал и нажмите «В мои списки».
         </p>
       )}
 
-      {fresh.length > 0 && (
-        <Section title="Вышло новое">
-          {fresh.map(({ item, text }) => (
-            <Card key={item.id} item={item} subtitle={text} highlight />
-          ))}
-        </Section>
+      {tab === "now" && !isEmpty && nowEmpty && (
+        <p className="text-white/50 sm:hidden">
+          Сейчас ничего не смотрите. Выберите что-нибудь во вкладке «Списки» или
+          найдите новое в «Поиске».
+        </p>
       )}
-      <EpisodeCalendar
-        titles={items.filter((item) => item.isSeries && item.status !== "dropped")}
-        updates={updates}
-      />
-      {continuing.length > 0 && (
-        <Section title="Смотрю">
-          {continuing.map(({ item, text }) => (
-            <Card
-              key={item.id}
-              item={item}
-              subtitle={text}
-              action={
-                // Начал, но сейчас не смотрит — отложить в очередь, метка останется
-                <button
-                  type="button"
-                  onClick={() => moveToQueue(item, item.summary)}
-                  title="Отложить в очередь — метка сохранится"
-                  className="shrink-0 rounded-lg border border-white/15 px-2.5 py-1.5 text-xs text-white/60 transition hover:border-amber-400/60 hover:text-white"
+
+      {tab === "lists" && !isEmpty && (
+        <div className="flex flex-col gap-3 sm:hidden">
+          <div
+            role="tablist"
+            aria-label="Список"
+            className="flex rounded-xl border border-white/10 p-1"
+          >
+            {(
+              [
+                ["queue", "Очередь"],
+                ["done", "Просмотрено"],
+                ["dropped", "Бросил"],
+              ] as const
+            ).map(([id, label]) => (
+              <button
+                key={id}
+                type="button"
+                role="tab"
+                aria-selected={listTab === id}
+                onClick={() => listTabStore.set(id)}
+                className={`flex-1 rounded-lg px-2 py-2 text-sm transition ${
+                  listTab === id
+                    ? "bg-amber-400 font-semibold text-black"
+                    : "text-white/60"
+                }`}
+              >
+                {label}{" "}
+                <span
+                  className={listTab === id ? "font-normal" : "text-white/35"}
                 >
-                  В очередь
-                </button>
-              }
-            />
-          ))}
-        </Section>
-      )}
-      {queue.length > 0 && (
-        <section className="flex flex-col gap-4">
-          <div>
-            <h2 className="text-xl font-bold">Очередь</h2>
-            <p className="text-sm text-white/45">
-              Порядок меняется перетаскиванием за ⠿
-            </p>
+                  {listCounts[id]}
+                </span>
+              </button>
+            ))}
           </div>
-          {/* Фильмы и сериалы — отдельными очередями */}
-          {(
-            [
-              ["Фильмы", queue.filter((item) => !item.isSeries)],
-              ["Сериалы", queue.filter((item) => item.isSeries)],
-            ] as const
-          ).map(
-            ([label, group]) =>
-              group.length > 0 && (
-                <div key={label} className="flex flex-col gap-2">
-                  <h3 className="text-sm font-semibold uppercase tracking-wide text-white/40">
-                    {label} <span className="font-normal">{group.length}</span>
-                  </h3>
-                  <QueueList items={[...group]} onDragEnd={handleQueueDrag} />
-                </div>
-              ),
+          {listCounts[listTab] === 0 && (
+            <p className="text-white/50">
+              {listTab === "queue"
+                ? "Очередь пуста. Найдите, что посмотреть, и нажмите «В мои списки»."
+                : listTab === "done"
+                  ? "Пока ничего не отмечено как просмотренное."
+                  : "Брошенных нет — и хорошо."}
+            </p>
           )}
-        </section>
+        </div>
       )}
-      {waiting.length > 0 && (
-        <Section title="Ждём продолжения">
-          {waiting.map(({ item, text }) => (
-            <Card key={item.id} item={item} subtitle={text} muted />
-          ))}
-        </Section>
-      )}
-      {done.length > 0 && (
-        <Collapsible title="Просмотрено" count={done.length} defaultOpen>
-          {/* Фильмы и сериалы отдельно, в каждом — лучшие оценки сверху */}
-          {(
-            [
-              ["Фильмы", done.filter((item) => !item.isSeries)],
-              ["Сериалы", done.filter((item) => item.isSeries)],
-            ] as const
-          ).map(
-            ([label, group]) =>
-              group.length > 0 && (
-                <li key={label} className="flex flex-col gap-3 sm:col-span-2">
-                  <h3 className="text-sm font-semibold uppercase tracking-wide text-white/40">
-                    {label} <span className="font-normal">{group.length}</span>
-                  </h3>
-                  <ul className="grid gap-3 sm:grid-cols-2">
-                    {group.map((item) => (
-                      <Card
-                        key={item.id}
-                        item={item}
-                        subtitle={lengthOnly(item.summary)}
-                        muted
-                      />
-                    ))}
-                  </ul>
-                </li>
-              ),
+
+      <div className={onTab(tab, "now")}>
+        {fresh.length > 0 && (
+          <Section title="Вышло новое">
+            {fresh.map(({ item, text }) => (
+              <Card key={item.id} item={item} subtitle={text} highlight />
+            ))}
+          </Section>
+        )}
+        <EpisodeCalendar
+          titles={items.filter(
+            (item) => item.isSeries && item.status !== "dropped",
           )}
-        </Collapsible>
-      )}
-      {dropped.length > 0 && (
-        <Collapsible title="Бросил" count={dropped.length}>
-          {dropped.map((item) => (
-            <Card key={item.id} item={item} subtitle={lengthOnly(item.summary)} muted />
-          ))}
-        </Collapsible>
-      )}
+          updates={updates}
+        />
+        {continuing.length > 0 && (
+          <Section title="Смотрю">
+            {continuing.map(({ item, text }) => (
+              <Card
+                key={item.id}
+                item={item}
+                subtitle={text}
+                action={
+                  // Начал, но сейчас не смотрит — отложить в очередь, метка останется
+                  <button
+                    type="button"
+                    onClick={() => moveToQueue(item, item.summary)}
+                    title="Отложить в очередь — метка сохранится"
+                    className="shrink-0 rounded-lg border border-white/15 px-2.5 py-1.5 text-xs text-white/60 transition hover:border-amber-400/60 hover:text-white"
+                  >
+                    В очередь
+                  </button>
+                }
+              />
+            ))}
+          </Section>
+        )}
+      </div>
+      <div className={onList("queue")}>
+        {queue.length > 0 && (
+          <section className="flex flex-col gap-4">
+            <div>
+              <h2 className="text-xl font-bold">Очередь</h2>
+              <p className="text-sm text-white/45">
+                Порядок меняется перетаскиванием за ⠿
+              </p>
+            </div>
+            {/* Фильмы и сериалы — отдельными очередями */}
+            {(
+              [
+                ["Фильмы", queue.filter((item) => !item.isSeries)],
+                ["Сериалы", queue.filter((item) => item.isSeries)],
+              ] as const
+            ).map(
+              ([label, group]) =>
+                group.length > 0 && (
+                  <div key={label} className="flex flex-col gap-2">
+                    <h3 className="text-sm font-semibold uppercase tracking-wide text-white/40">
+                      {label}{" "}
+                      <span className="font-normal">{group.length}</span>
+                    </h3>
+                    <QueueList items={[...group]} onDragEnd={handleQueueDrag} />
+                  </div>
+                ),
+            )}
+          </section>
+        )}
+      </div>
+      <div className={onTab(tab, "now")}>
+        {waiting.length > 0 && (
+          <Section title="Ждём продолжения">
+            {waiting.map(({ item, text }) => (
+              <Card key={item.id} item={item} subtitle={text} muted />
+            ))}
+          </Section>
+        )}
+      </div>
+      <div className={onList("done")}>
+        {done.length > 0 && (
+          <Collapsible
+            id="done"
+            title="Просмотрено"
+            count={done.length}
+            defaultOpen
+          >
+            {/* Фильмы и сериалы отдельно, в каждом — лучшие оценки сверху.
+              Каждую группу можно свернуть, чтобы не листать длинный список */}
+            {(
+              [
+                [
+                  "done-movies",
+                  "Фильмы",
+                  done.filter((item) => !item.isSeries),
+                ],
+                [
+                  "done-series",
+                  "Сериалы",
+                  done.filter((item) => item.isSeries),
+                ],
+              ] as const
+            ).map(
+              ([id, label, group]) =>
+                group.length > 0 && (
+                  <li key={id} className="sm:col-span-2">
+                    <FoldGroup id={id} label={label} count={group.length}>
+                      {group.map((item) => (
+                        <Card
+                          key={item.id}
+                          item={item}
+                          subtitle={lengthOnly(item.summary)}
+                          muted
+                        />
+                      ))}
+                    </FoldGroup>
+                  </li>
+                ),
+            )}
+          </Collapsible>
+        )}
+      </div>
+      <div className={onList("dropped")}>
+        {dropped.length > 0 && (
+          <Collapsible id="dropped" title="Бросил" count={dropped.length}>
+            {dropped.map((item) => (
+              <Card
+                key={item.id}
+                item={item}
+                subtitle={lengthOnly(item.summary)}
+                muted
+              />
+            ))}
+          </Collapsible>
+        )}
+      </div>
     </div>
   );
 }
@@ -331,7 +491,10 @@ function Filters() {
     <div className="flex flex-col gap-3">
       <h2 className="text-2xl font-bold">Мои списки</h2>
       <div className="flex flex-wrap items-center gap-1.5">
-        <Tab active={filters.company === "all"} onClick={() => set({ company: "all" })}>
+        <Tab
+          active={filters.company === "all"}
+          onClick={() => set({ company: "all" })}
+        >
           Все
         </Tab>
         {companies.map((company) =>
@@ -376,7 +539,7 @@ function Filters() {
             </Tab>
           ),
         )}
-        {editing && (
+        {editing ? (
           <button
             type="button"
             onClick={() => addCompany("Новая компания")}
@@ -384,6 +547,8 @@ function Filters() {
           >
             + Добавить
           </button>
+        ) : (
+          <AddCompany />
         )}
         <button
           type="button"
@@ -401,12 +566,81 @@ function Filters() {
             ["series", "Сериалы"],
           ] as const
         ).map(([kind, label]) => (
-          <Tab key={kind} small active={filters.kind === kind} onClick={() => set({ kind })}>
+          <Tab
+            key={kind}
+            small
+            active={filters.kind === kind}
+            onClick={() => set({ kind })}
+          >
             {label}
           </Tab>
         ))}
       </div>
     </div>
+  );
+}
+
+// Кнопка «+»: по нажатию раскрывается в поле для названия новой компании
+function AddCompany() {
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+
+  function close() {
+    setOpen(false);
+    setName("");
+  }
+
+  function submit() {
+    const trimmed = name.trim();
+    if (trimmed) addCompany(trimmed);
+    close();
+  }
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        aria-label="Добавить компанию"
+        title="Добавить компанию"
+        className="flex h-8 w-8 items-center justify-center rounded-full border border-dashed border-white/25 text-lg leading-none text-white/60 transition hover:border-white/50 hover:text-white"
+      >
+        +
+      </button>
+    );
+  }
+
+  return (
+    <form
+      onSubmit={(event) => {
+        event.preventDefault();
+        submit();
+      }}
+      className="flex animate-pop-in items-center rounded-full border border-amber-400/50 bg-white/5"
+    >
+      <input
+        autoFocus
+        value={name}
+        onChange={(event) => setName(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key === "Escape") close();
+        }}
+        // Нажали мимо поля и ничего не ввели — сворачиваем обратно в «+»
+        onBlur={() => {
+          if (!name.trim()) close();
+        }}
+        placeholder="Например, С друзьями"
+        aria-label="Название новой компании"
+        className="w-40 bg-transparent py-1.5 pl-3 text-base outline-none placeholder:text-white/30 sm:text-sm"
+      />
+      <button
+        type="submit"
+        disabled={!name.trim()}
+        className="rounded-full px-3 py-1.5 text-sm font-semibold text-amber-400 transition hover:text-amber-300 disabled:text-white/25"
+      >
+        Добавить
+      </button>
+    </form>
   );
 }
 
@@ -492,7 +726,9 @@ function SortableCard({ item, position }: { item: Item; position: number }) {
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={`flex items-center gap-2 rounded-xl border bg-background p-2 pr-3 ${
-        isDragging ? "relative z-10 border-amber-400/60 shadow-2xl" : "border-white/10"
+        isDragging
+          ? "relative z-10 border-amber-400/60 shadow-2xl"
+          : "border-white/10"
       }`}
     >
       <button
@@ -537,22 +773,64 @@ function Section({
 }
 
 function Collapsible({
+  id,
   title,
   count,
   defaultOpen = false,
   children,
 }: {
+  id: string;
   title: string;
   count: number;
   defaultOpen?: boolean;
   children: React.ReactNode;
 }) {
+  const [open, setOpen] = useFold(id, defaultOpen);
   return (
-    <details className="group" open={defaultOpen || undefined}>
+    <details
+      className="group"
+      open={open}
+      onToggle={(event) => setOpen(event.currentTarget.open)}
+    >
       <summary className="text-xl font-bold">
         {title} <span className="font-normal text-white/40">{count}</span>
       </summary>
       <ul className="mt-4 grid gap-3 sm:grid-cols-2">{children}</ul>
+    </details>
+  );
+}
+
+// Подгруппа внутри раздела («Фильмы», «Сериалы»), сворачивается по нажатию
+function FoldGroup({
+  id,
+  label,
+  count,
+  children,
+}: {
+  id: string;
+  label: string;
+  count: number;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useFold(id, true);
+  return (
+    <details
+      className="group/fold"
+      open={open}
+      onToggle={(event) => setOpen(event.currentTarget.open)}
+    >
+      <summary className="flex w-fit list-none items-center gap-2 py-1 [&::-webkit-details-marker]:hiddentext-sm font-semibold uppercase tracking-wide text-white/40 transition hover:text-white/70">
+        <span className="inline-block transition-transform group-open/fold:rotate-90">
+          ›
+        </span>
+        {label} <span className="font-normal">{count}</span>
+        {!open && (
+          <span className="font-normal normal-case tracking-normal">
+            · показать
+          </span>
+        )}
+      </summary>
+      <ul className="mt-3 grid gap-3 sm:grid-cols-2">{children}</ul>
     </details>
   );
 }

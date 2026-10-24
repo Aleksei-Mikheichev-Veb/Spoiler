@@ -19,7 +19,8 @@ export default async function SearchPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <SearchForm defaultValue={query} />
+      {/* Пришли из вкладки «Поиск» с пустой строкой — сразу ставим курсор */}
+      <SearchForm defaultValue={query} autoFocus={!query} />
 
       {query && results.length === 0 && (
         <p className="text-white/60">По запросу «{query}» ничего не нашлось.</p>

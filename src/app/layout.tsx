@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Manrope } from "next/font/google";
+import { Suspense } from "react";
+import { BottomNav } from "@/components/BottomNav";
 import { DemoSeed } from "@/components/DemoSeed";
 import { HeaderSearch } from "@/components/HeaderSearch";
 import "./globals.css";
@@ -36,7 +38,14 @@ export default function RootLayout({
           </div>
         </header>
         <DemoSeed />
-        <main className="mx-auto max-w-5xl px-4 py-8">{children}</main>
+        {/* Снизу на телефоне — место под нижнюю панель */}
+        <main className="mx-auto max-w-5xl px-4 pt-6 pb-28 sm:py-8">
+          {children}
+        </main>
+        {/* useSearchParams требует Suspense, иначе Next не соберёт страницы */}
+        <Suspense>
+          <BottomNav />
+        </Suspense>
       </body>
     </html>
   );

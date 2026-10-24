@@ -2,9 +2,11 @@
 export function SearchForm({
   defaultValue = "",
   compact = false,
+  autoFocus = false,
 }: {
   defaultValue?: string;
   compact?: boolean;
+  autoFocus?: boolean;
 }) {
   return (
     <form action="/search" className="flex w-full gap-2">
@@ -12,6 +14,7 @@ export function SearchForm({
         type="search"
         name="q"
         defaultValue={defaultValue}
+        autoFocus={autoFocus}
         placeholder={
           compact ? "Найти фильм или сериал" : "Фильм или сериал"
         }
