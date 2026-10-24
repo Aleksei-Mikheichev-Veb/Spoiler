@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import { Manrope } from "next/font/google";
 import { Suspense } from "react";
@@ -19,6 +19,13 @@ export const metadata: Metadata = {
   },
   description:
     "Напомним, что было в прошлых сезонах и частях — ровно до того места, где вы остановились. Без спойлеров.",
+  // На iPhone после «На экран Домой» сайт открывается как приложение
+  appleWebApp: { capable: true, title: "Что было", statusBarStyle: "black" },
+};
+
+// Цвет верхней полосы телефона — под цвет сайта
+export const viewport: Viewport = {
+  themeColor: "#0d0d12",
 };
 
 export default function RootLayout({

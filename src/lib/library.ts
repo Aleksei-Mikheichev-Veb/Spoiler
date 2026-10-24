@@ -199,13 +199,23 @@ export function removeCompany(companyId: string) {
 }
 
 // Поставил метку — значит, смотрит: сериал попадает в «Смотрю».
-// Из «Хочу посмотреть» и «Бросил» переезжает туда же; «Просмотрено» не трогаем —
-// человек мог начать пересматривать.
-export function markAsWatching(title: TitleInfo, summary?: string) {
+// Из «Хочу посмотреть», «Бросил» и «Просмотрено» переезжает туда же
+// (в «Просмотрено» сериал мог попасть по оценке, поставленной до метки,
+// или человек начал пересматривать). Исключение — досмотрел последнюю
+// вышедшую серию (finished): тогда «Просмотрено» оставляем.
+export function markAsWatching(
+  title: TitleInfo,
+  summary?: string,
+  finished = false,
+) {
   const current = entriesStore.get()[title.id];
   if (!current) {
     addToLibrary(title, "watching", summary);
-  } else if (current.status === "want" || current.status === "dropped") {
+  } else if (
+    current.status === "want" ||
+    current.status === "dropped" ||
+    (current.status === "done" && !finished)
+  ) {
     update(title.id, { status: "watching" });
   }
 }

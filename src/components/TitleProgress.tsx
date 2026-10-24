@@ -36,7 +36,7 @@ export function TitleProgress({
   // Сохранить метку и отметить сериал в списках как «Смотрю»
   const saveMark = (mark: Parameters<typeof saveProgress>[1]) => {
     saveProgress(title, mark);
-    markAsWatching(title, summary);
+    markAsWatching(title, summary, Boolean(mark.watched));
   };
   const aired = airedEpisodes(seasons, now);
   const mark: EpisodeKey | null =

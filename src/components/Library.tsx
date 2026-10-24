@@ -787,16 +787,21 @@ function Collapsible({
 }) {
   const [open, setOpen] = useFold(id, defaultOpen);
   return (
-    <details
-      className="group"
-      open={open}
-      onToggle={(event) => setOpen(event.currentTarget.open)}
-    >
-      <summary className="text-xl font-bold">
-        {title} <span className="font-normal text-white/40">{count}</span>
-      </summary>
-      <ul className="mt-4 grid gap-3 sm:grid-cols-2">{children}</ul>
-    </details>
+    <>
+      {/* На телефоне раздел и так выбран переключателем вкладок —
+          заголовок и сворачивание там лишние */}
+      <ul className="grid gap-3 sm:hidden">{children}</ul>
+      <details
+        className="group hidden sm:block"
+        open={open}
+        onToggle={(event) => setOpen(event.currentTarget.open)}
+      >
+        <summary className="text-xl font-bold">
+          {title} <span className="font-normal text-white/40">{count}</span>
+        </summary>
+        <ul className="mt-4 grid gap-3 sm:grid-cols-2">{children}</ul>
+      </details>
+    </>
   );
 }
 

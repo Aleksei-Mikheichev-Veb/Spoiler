@@ -28,5 +28,8 @@ export function proxy(request: NextRequest) {
 // секретного, а уменьшатель картинок Next.js запрашивает фото у этого же
 // сервера без пароля — иначе браузер снова и снова спрашивал бы вход
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|recaps/|favicon.ico).*)"],
+  // Описание приложения и иконки телефон запрашивает без пароля
+  matcher: [
+    "/((?!_next/static|_next/image|recaps/|favicon.ico|manifest.webmanifest|pwa-icon/|apple-icon).*)",
+  ],
 };

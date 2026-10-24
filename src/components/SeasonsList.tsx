@@ -33,7 +33,7 @@ export function SeasonsList({
   // Сохранить метку и отметить сериал в списках как «Смотрю»
   const saveMark = (mark: Parameters<typeof saveProgress>[1]) => {
     saveProgress(title, mark);
-    markAsWatching(title, summary);
+    markAsWatching(title, summary, Boolean(mark.watched));
   };
   const mark: EpisodeKey | null =
     progress?.season && progress?.episode

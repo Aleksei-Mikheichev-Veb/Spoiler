@@ -7,10 +7,11 @@ import type { TitleInfo } from "@/lib/progress";
 const SCORES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
 // Цвет оценки как на Кинопоиске: плохо — красный, средне — серый, хорошо — зелёный
+// Цвета как на Кинопоиске: насыщенный зелёный, серый, красный
 export function ratingColor(rating: number): string {
-  if (rating >= 7) return "text-emerald-400";
+  if (rating >= 7) return "text-[#3bc43b]";
   if (rating >= 5) return "text-white/70";
-  return "text-red-400";
+  return "text-[#ff3b30]";
 }
 
 // «Ваша оценка» на карточке фильма или сериала
