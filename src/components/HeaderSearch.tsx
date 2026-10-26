@@ -3,14 +3,14 @@
 import { usePathname } from "next/navigation";
 import { SearchForm } from "@/components/SearchForm";
 
-// Поиск в шапке. На главной и странице поиска не нужен — там есть свой.
-// На телефоне тоже не нужен — там поиск во вкладке нижней панели.
+// Поиск в шапке — на компьютере. На странице поиска не нужен: там свой.
+// На телефоне поиск во вкладке нижней панели.
 export function HeaderSearch() {
   const pathname = usePathname();
-  if (pathname === "/" || pathname === "/search") return null;
+  if (pathname === "/search" || pathname === "/login") return null;
 
   return (
-    <div className="hidden w-full max-w-sm sm:block">
+    <div className="hidden w-full max-w-xs sm:block">
       <SearchForm compact />
     </div>
   );

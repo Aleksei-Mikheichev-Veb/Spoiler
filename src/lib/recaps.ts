@@ -1,7 +1,7 @@
 // Пересказы сериалов. В прототипе лежат готовыми файлами в data/recaps,
 // позже переедут в базу данных.
 import "server-only";
-import { readFile } from "node:fs/promises";
+import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 
 export interface EpisodeRecap {
@@ -67,6 +67,19 @@ export interface Recap {
   seasonNotes?: SeasonNote[];
   characters?: Character[];
   seasons: SeasonRecap[];
+}
+
+// Сериалы, для которых пересказ уже готов
+export async function listRecapIds(): Promise<number[]> {
+  try {
+    const files = await readdir(path.join(process.cwd(), "data", "recaps"));
+    return files
+      .filter((name) => name.endsWith(".json"))
+      .map((name) => Number(name.replace(".json", "")))
+      .filter((id) => Number.isInteger(id));
+  } catch {
+    return [];
+  }
 }
 
 export async function getRecap(titleId: number): Promise<Recap | null> {

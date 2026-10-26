@@ -25,21 +25,34 @@ export interface Franchise {
 
 const DIR = path.join(process.cwd(), "data", "franchises");
 
-// Вселенная, в которую входит фильм, или null
-export async function getFranchiseByFilm(
-  kpId: number,
-): Promise<Franchise | null> {
+// Все вселенные — для главной
+export async function listFranchises(): Promise<Franchise[]> {
   let files: string[];
   try {
     files = await readdir(DIR);
   } catch {
-    return null;
+    return [];
   }
-  for (const file of files.filter((name) => name.endsWith(".json"))) {
-    const franchise = JSON.parse(
-      await readFile(path.join(DIR, file), "utf8"),
-    ) as Franchise;
-    if (franchise.films.some((film) => film.kpId === kpId)) return franchise;
-  }
-  return null;
+  return Promise.all(
+    files
+      .filter((name) => name.endsWith(".json"))
+      .map(
+        async (file) =>
+          JSON.parse(
+            await readFile(path.join(DIR, file), "utf8"),
+          ) as Franchise,
+      ),
+  );
+}
+
+// Вселенная, в которую входит фильм, или null
+export async function getFranchiseByFilm(
+  kpId: number,
+): Promise<Franchise | null> {
+  const franchises = await listFranchises();
+  return (
+    franchises.find((franchise) =>
+      franchise.films.some((film) => film.kpId === kpId),
+    ) ?? null
+  );
 }

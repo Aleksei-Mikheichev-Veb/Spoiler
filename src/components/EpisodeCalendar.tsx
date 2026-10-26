@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import type { ScheduledEpisode, UpdatesResponse } from "@/app/api/updates/route";
+import { DAY, dayLabel, startOfDay } from "@/lib/dates";
 import type { TitleInfo } from "@/lib/progress";
 
 interface SeriesRow {
@@ -14,38 +15,20 @@ interface SeriesRow {
   main: ScheduledEpisode & { time: number };
 }
 
-const DAY = 24 * 60 * 60 * 1000;
 // Сколько сериалов показывать сразу — чтобы раздел не занимал весь экран
 const VISIBLE_SERIES = 3;
 
-// Полночь того же дня — чтобы считать «сегодня», «завтра» по календарю
-function startOfDay(time: number): number {
-  const date = new Date(time);
-  date.setHours(0, 0, 0, 0);
-  return date.getTime();
-}
-
-// «Сегодня», «Завтра», «Вчера» или «пт, 31 октября»
-function dayLabel(time: number, now: number): string {
-  const days = Math.round((startOfDay(time) - startOfDay(now)) / DAY);
-  if (days === 0) return "Сегодня";
-  if (days === 1) return "Завтра";
-  if (days === -1) return "Вчера";
-  return new Date(time).toLocaleDateString("ru-RU", {
-    weekday: "short",
-    day: "numeric",
-    month: "long",
-  });
-}
-
-// Календарь серий: по строке на сериал с ближайшей серией,
-// остальные серии — раскрываются
+// Короткий календарь серий для главной: по строке на сериал с ближайшей
+// серией, остальные серии — раскрываются
 export function EpisodeCalendar({
   titles,
   updates,
+  action,
 }: {
   titles: TitleInfo[];
   updates: UpdatesResponse | null;
+  // Ссылка справа от заголовка, например «Весь календарь →»
+  action?: React.ReactNode;
 }) {
   const [showAll, setShowAll] = useState(false);
   if (!updates) return null;
@@ -74,7 +57,10 @@ export function EpisodeCalendar({
 
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="text-xl font-bold">Календарь серий</h2>
+      <div className="flex items-baseline justify-between gap-3">
+        <h2 className="text-xl font-bold">Ближайшие серии</h2>
+        {action}
+      </div>
       <ul className="flex flex-col gap-1.5">
         {visible.map((row) => (
           <CalendarRow

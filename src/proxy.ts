@@ -1,34 +1,34 @@
-// Закрытый тест: если на сервере задан SITE_PASSWORD, браузер спрашивает
-// логин и пароль (логин любой). Без переменной сайт открыт — как локально.
+// Закрытый тест: если на сервере задан SITE_PASSWORD, без входа видна
+// только страница /login. Без переменной сайт открыт — как локально.
 import { NextResponse, type NextRequest } from "next/server";
+import { AUTH_COOKIE, authToken, publicBase } from "@/lib/site-auth";
 
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const password = process.env.SITE_PASSWORD;
   if (!password) return NextResponse.next();
 
-  const header = request.headers.get("authorization");
-  if (header?.startsWith("Basic ")) {
-    // «логин:пароль» в base64; пароль — всё после первого двоеточия
-    const decoded = atob(header.slice("Basic ".length));
-    if (decoded.slice(decoded.indexOf(":") + 1) === password) {
-      return NextResponse.next();
-    }
+  const { pathname, search } = request.nextUrl;
+  if (pathname === "/login" || pathname === "/api/login") {
+    return NextResponse.next();
+  }
+  if (request.cookies.get(AUTH_COOKIE)?.value === (await authToken(password))) {
+    return NextResponse.next();
   }
 
-  return new NextResponse("Сайт пока закрыт для тестирования. Нужен пароль.", {
-    status: 401,
-    headers: {
-      "WWW-Authenticate": 'Basic realm="spoiler", charset="UTF-8"',
-      "Content-Type": "text/plain; charset=utf-8",
-    },
-  });
+  // Запросы данных со страниц — просто «нет доступа», без перехода
+  if (pathname.startsWith("/api/")) {
+    return NextResponse.json({ error: "Нужен вход" }, { status: 401 });
+  }
+  const login = new URL("/login", publicBase(request));
+  login.searchParams.set("next", pathname + search);
+  return NextResponse.redirect(login);
 }
 
 // Картинки и служебные файлы пускаем без пароля: в них нет ничего
 // секретного, а уменьшатель картинок Next.js запрашивает фото у этого же
-// сервера без пароля — иначе браузер снова и снова спрашивал бы вход
+// сервера без cookie. Описание приложения и иконки телефон тоже
+// запрашивает без cookie
 export const config = {
-  // Описание приложения и иконки телефон запрашивает без пароля
   matcher: [
     "/((?!_next/static|_next/image|recaps/|favicon.ico|manifest.webmanifest|pwa-icon/|apple-icon).*)",
   ],

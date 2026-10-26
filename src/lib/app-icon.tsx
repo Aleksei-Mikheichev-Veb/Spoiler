@@ -18,7 +18,9 @@ export function appIcon(size: number, padding = 0.22) {
           background: "#0d0d12",
         }}
       >
-        <svg width={inner} height={inner} viewBox="0 0 24 24">
+        {/* Треугольники «тяжелее» справа, где у них основание, поэтому
+            знак сдвинут чуть влево — так он выглядит ровно по центру */}
+        <svg width={inner} height={inner} viewBox="1 0 24 24">
           <path d="M11 5 2 12l9 7z" fill="#fbbf24" />
           <path d="M22 5l-9 7 9 7z" fill="#fbbf24" />
         </svg>

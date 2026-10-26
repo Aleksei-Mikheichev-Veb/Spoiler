@@ -56,6 +56,94 @@ export interface Title extends SearchItem {
   genres?: { name: string }[];
   persons?: PersonInTitle[];
   seasonsInfo?: { number: number; episodesCount: number }[];
+  premiere?: Premiere;
+}
+
+// Даты премьер: в мире, в кино в России, онлайн
+export interface Premiere {
+  world?: string;
+  russia?: string;
+  digital?: string;
+}
+
+export interface PremiereDate {
+  date: string;
+  // Где премьера: в российском прокате, онлайн или только в мире
+  where: "russia" | "digital" | "world";
+}
+
+// Какую дату премьеры показывать человеку из России
+export function premiereDate(premiere?: Premiere): PremiereDate | undefined {
+  if (premiere?.russia) return { date: premiere.russia, where: "russia" };
+  if (premiere?.digital) return { date: premiere.digital, where: "digital" };
+  if (premiere?.world) return { date: premiere.world, where: "world" };
+  return undefined;
+}
+
+export interface UpcomingTitle extends SearchItem {
+  premiere: PremiereDate;
+  // Сколько человек на Кинопоиске ждут — по этому выбираем самое громкое
+  awaiting: number;
+}
+
+// Ближайшие громкие премьеры на 3 месяца вперёд. Берём и мировые
+// (так попадают голливудские фильмы без российского проката),
+// и российские, а потом оставляем самые ожидаемые
+export async function getUpcomingPremieres(
+  now: number,
+  limit = 8,
+): Promise<UpcomingTitle[]> {
+  const format = (time: number) => {
+    const date = new Date(time);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${pad(date.getDate())}.${pad(date.getMonth() + 1)}.${date.getFullYear()}`;
+  };
+  const range = `${format(now)}-${format(now + 90 * 24 * 60 * 60 * 1000)}`;
+  const query = (field: string) =>
+    request<{
+      docs: (SearchItem & { premiere?: Premiere; votes?: { await?: number } })[];
+    }>("/v1.4/movie", {
+      [field]: range,
+      sortField: "votes.await",
+      sortType: "-1",
+      limit: 15,
+      notNullFields: "poster.url",
+      selectFields: [
+        "id",
+        "name",
+        "alternativeName",
+        "type",
+        "year",
+        "shortDescription",
+        "poster",
+        "isSeries",
+        "premiere",
+        "votes",
+      ],
+    });
+  const lists = await Promise.all([
+    query("premiere.world"),
+    query("premiere.russia"),
+  ]);
+
+  const today = new Date(now).setHours(0, 0, 0, 0);
+  const byId = new Map<number, UpcomingTitle>();
+  for (const item of lists.flatMap((list) => list.docs)) {
+    const premiere = premiereDate(item.premiere);
+    // Премьера в мире могла уже пройти, а в России — нет, и наоборот:
+    // оставляем только то, что ещё впереди по выбранной дате
+    if (!premiere || Date.parse(premiere.date) < today) continue;
+    byId.set(item.id, {
+      ...item,
+      poster: cleanPoster(item.poster),
+      premiere,
+      awaiting: item.votes?.await ?? 0,
+    });
+  }
+  return [...byId.values()]
+    .sort((a, b) => b.awaiting - a.awaiting)
+    .slice(0, limit)
+    .sort((a, b) => Date.parse(a.premiere.date) - Date.parse(b.premiere.date));
 }
 
 export interface Episode {

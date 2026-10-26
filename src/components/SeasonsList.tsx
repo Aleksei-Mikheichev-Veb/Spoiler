@@ -8,9 +8,10 @@ import {
   isAfter,
   createAiredCheck,
   displayEpisodeName,
+  findUpcoming,
   type EpisodeKey,
 } from "@/lib/episodes";
-import { markAsWatching } from "@/lib/library";
+import { markAsDone, markAsWatching } from "@/lib/library";
 import { saveProgress, useProgress, type TitleInfo } from "@/lib/progress";
 import type { Season } from "@/lib/poiskkino";
 
@@ -33,7 +34,7 @@ export function SeasonsList({
   // Сохранить метку и отметить сериал в списках как «Смотрю»
   const saveMark = (mark: Parameters<typeof saveProgress>[1]) => {
     saveProgress(title, mark);
-    markAsWatching(title, summary, Boolean(mark.watched));
+    markAsWatching(title, summary);
   };
   const mark: EpisodeKey | null =
     progress?.season && progress?.episode
@@ -69,12 +70,21 @@ export function SeasonsList({
     if (next) {
       markEpisode(next);
     } else {
-      saveMark({
+      // Досмотрел последнюю вышедшую серию. Если продолжение анонсировано —
+      // сериал в «Смотрю» (на главной он будет в «Ждём продолжения»),
+      // если нет — в «Просмотрено». Вышедшие потом серии всё равно
+      // появятся в «Вышло новое»
+      saveProgress(title, {
         season: current[0],
         episode: current[1],
         episodeName: episodeName(seasons, current),
         watched: true,
       });
+      if (findUpcoming(seasons, now, current)) {
+        markAsWatching(title, summary);
+      } else {
+        markAsDone(title, summary);
+      }
     }
   }
 
