@@ -39,6 +39,19 @@ export interface Portrait {
   photoSource?: string;
 }
 
+// Одно из лиц героя, когда сюжет идёт в двух временах сразу (юная и
+// взрослая версии в одних и тех же сериях). Лицо показываем с серии
+// from — раньше оно может быть спойлером: например, выдать, что
+// героиня доживёт до наших дней
+export interface Face {
+  // Подпись под фото: «1996», «наши дни»
+  label: string;
+  from: [season: number, episode: number];
+  actor: string;
+  photo?: string;
+  photoSource?: string;
+}
+
 export interface Character {
   // В текстах пересказа упоминания размечены как [[id|словоформа]]
   id: string;
@@ -51,6 +64,9 @@ export interface Character {
   // Смена актёра по ходу сериала (например, после скачка во времени
   // юную героиню играет другая актриса). Действует с серии from
   portraits?: Portrait[];
+  // Несколько лиц одновременно (см. Face). Если задано, actor и photo
+  // не используются
+  faces?: Face[];
   about: CharacterSnapshot[];
 }
 

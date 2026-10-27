@@ -124,7 +124,7 @@ export function HomeMine() {
       {fresh.length > 0 && (
         <Section title="Вышло новое">
           {fresh.map(({ item, text }) => (
-            <Card key={item.id} item={item} subtitle={text} highlight />
+            <Card key={item.id} item={item} subtitle={text} highlight showKind />
           ))}
         </Section>
       )}
@@ -140,7 +140,7 @@ export function HomeMine() {
           }
         >
           {recent.map(({ item, text }) => (
-            <Card key={item.id} item={item} subtitle={text} />
+            <Card key={item.id} item={item} subtitle={text} showKind />
           ))}
         </Section>
       )}

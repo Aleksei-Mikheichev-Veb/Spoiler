@@ -371,6 +371,7 @@ export function Card({
   subtitle,
   highlight = false,
   muted = false,
+  showKind = false,
   action,
 }: {
   item: Item;
@@ -378,6 +379,8 @@ export function Card({
   highlight?: boolean;
   // Серая подпись вместо жёлтой — для того, что не «смотрю прямо сейчас»
   muted?: boolean;
+  // Подпись «фильм» / «сериал» — на главной, где они вперемешку
+  showKind?: boolean;
   // Дополнительная кнопка справа, например «В очередь»
   action?: React.ReactNode;
 }) {
@@ -387,7 +390,12 @@ export function Card({
         highlight ? "border-amber-400/50 bg-amber-400/5" : "border-white/10"
       }`}
     >
-      <CardBody item={item} subtitle={subtitle} accent={!muted} />
+      <CardBody
+        item={item}
+        subtitle={subtitle}
+        accent={!muted}
+        showKind={showKind}
+      />
       {action}
       <RemoveButton item={item} />
     </li>
@@ -398,10 +406,13 @@ function CardBody({
   item,
   subtitle,
   accent = false,
+  showKind = false,
 }: {
   item: Item;
   subtitle: string;
   accent?: boolean;
+  // Подпись «фильм» / «сериал» — только там, где они вперемешку
+  showKind?: boolean;
 }) {
   return (
     <Link
@@ -426,16 +437,18 @@ function CardBody({
             <span className="font-normal text-white/40"> ({item.year})</span>
           ) : null}
         </span>
-        <span className="text-xs uppercase tracking-wide text-white/35">
-          {item.isSeries ? "сериал" : "фильм"}
-          {item.rating ? (
-            <span
-              className={`ml-2 font-bold normal-case tracking-normal ${ratingColor(item.rating)}`}
-            >
-              ★ {item.rating}
-            </span>
-          ) : null}
-        </span>
+        {(showKind || item.rating) && (
+          <span className="text-xs uppercase tracking-wide text-white/35">
+            {showKind && (item.isSeries ? "сериал" : "фильм")}
+            {item.rating ? (
+              <span
+                className={`font-bold normal-case tracking-normal ${showKind ? "ml-2" : ""} ${ratingColor(item.rating)}`}
+              >
+                ★ {item.rating}
+              </span>
+            ) : null}
+          </span>
+        )}
         {subtitle && (
           <span
             className={`truncate text-sm ${accent ? "text-amber-400" : "text-white/50"}`}

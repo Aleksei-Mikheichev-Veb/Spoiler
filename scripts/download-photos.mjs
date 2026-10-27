@@ -19,14 +19,17 @@ const failed = [];
 
 for (const file of dataFiles) {
   const recap = JSON.parse(readFileSync(file, "utf8"));
-  // Основное фото героя и фото из смены актёров (portraits)
+  // Основное фото героя, фото из смены актёров (portraits)
+  // и лица героя из разных времён (faces)
   const images = (recap.characters ?? []).flatMap((character) => [
     { ...character },
-    ...(character.portraits ?? []).map((portrait) => ({
-      id: `${character.id} (${portrait.actor})`,
-      photo: portrait.photo,
-      photoSource: portrait.photoSource,
-    })),
+    ...[...(character.portraits ?? []), ...(character.faces ?? [])].map(
+      (portrait) => ({
+        id: `${character.id} (${portrait.actor})`,
+        photo: portrait.photo,
+        photoSource: portrait.photoSource,
+      }),
+    ),
   ]);
   for (const character of images) {
     if (!character.photo || !character.photoSource) continue;

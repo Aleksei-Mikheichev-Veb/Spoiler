@@ -57,6 +57,14 @@ export interface Title extends SearchItem {
   persons?: PersonInTitle[];
   seasonsInfo?: { number: number; episodesCount: number }[];
   premiere?: Premiere;
+  // Онлайн-кинотеатры, где есть фильм (данные Кинопоиска)
+  watchability?: { items?: WatchOption[] | null } | null;
+}
+
+export interface WatchOption {
+  name: string;
+  url: string;
+  logo?: { url?: string };
 }
 
 // Даты премьер: в мире, в кино в России, онлайн

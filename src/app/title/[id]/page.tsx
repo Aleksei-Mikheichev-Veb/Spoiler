@@ -8,6 +8,7 @@ import { RatingControl } from "@/components/RatingControl";
 import { RecapPanel } from "@/components/RecapPanel";
 import { SeasonsList } from "@/components/SeasonsList";
 import { TitleProgress } from "@/components/TitleProgress";
+import { WhereToWatch } from "@/components/WhereToWatch";
 import { airedEpisodes } from "@/lib/episodes";
 import { formatMinutes, plural } from "@/lib/plural";
 import {
@@ -145,6 +146,7 @@ export default async function TitlePage({ params }: Props) {
           )}
           <RatingControl title={titleInfo} summary={summary} />
           <ListControls title={titleInfo} summary={summary} />
+          <WhereToWatch options={title.watchability?.items} />
         </div>
       </section>
 

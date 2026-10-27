@@ -5,7 +5,7 @@ import { Fragment, useEffect, useRef, useState } from "react";
 import { isAfter, type EpisodeKey } from "@/lib/episodes";
 import { snapshotAt, useRecapBoundary } from "@/lib/recap-boundary";
 import type { Season } from "@/lib/poiskkino";
-import type { Character } from "@/lib/recaps";
+import type { Character, Face } from "@/lib/recaps";
 
 // Герой с описанием, которое можно показать к текущему моменту
 export interface KnownCharacter {
@@ -13,6 +13,8 @@ export interface KnownCharacter {
   text: string;
   // Лицо и актёр пока скрыты — иначе спойлер
   hidden: boolean;
+  // Лица, которые уже можно показать (у героев из двух времён)
+  faces: Face[];
 }
 
 export type KnownCharacters = Map<string, KnownCharacter>;
@@ -35,8 +37,17 @@ export function knownCharacters(
       .at(-1);
     const current = portrait
       ? { ...character, actor: portrait.actor, photo: portrait.photo }
-      : character;
+      : { ...character };
+    const faces = hidden
+      ? []
+      : (character.faces ?? []).filter((face) => !isAfter(face.from, boundary));
+    // Пока открыто одно лицо — обычная карточка с ним
+    if (faces.length === 1) {
+      current.actor = faces[0].actor;
+      current.photo = faces[0].photo;
+    }
     known.set(character.id, {
+      faces: faces.length > 1 ? faces : [],
       // Фото и актёра убираем прямо из данных, чтобы они не попали в разметку
       character: hidden
         ? { ...current, photo: undefined, actor: undefined }
@@ -82,9 +93,13 @@ function CharacterLink({
   entry: KnownCharacter;
 }) {
   const ref = useRef<HTMLButtonElement>(null);
-  const [popover, setPopover] = useState<{ top: number; left: number } | null>(
-    null,
-  );
+  const [popover, setPopover] = useState<{
+    top: number;
+    left: number;
+    // Карточка над именем, чтобы курсор её не закрывал. Если сверху
+    // не хватает места — под именем
+    above: boolean;
+  } | null>(null);
   const [sheet, setSheet] = useState(false);
 
   // Карточка привязана к месту на экране — при прокрутке прячем её
@@ -99,9 +114,12 @@ function CharacterLink({
     const rect = ref.current?.getBoundingClientRect();
     if (!rect) return;
     const width = 288;
+    // Примерная высота карточки с фото
+    const above = rect.top > 160;
     setPopover({
-      top: rect.bottom + 8,
+      top: above ? rect.top - 8 : rect.bottom + 8,
       left: Math.max(8, Math.min(rect.left, window.innerWidth - width - 8)),
+      above,
     });
   }
 
@@ -134,12 +152,20 @@ function CharacterLink({
         {label}
       </button>
       {popover && (
+        // Сдвиг вверх — на внешнем блоке, анимация — на внутреннем:
+        // иначе анимация перебивает сдвиг и карточка прыгает
         <div
           role="tooltip"
-          style={{ top: popover.top, left: popover.left }}
-          className="pointer-events-none fixed z-50 w-72 animate-pop-in rounded-xl border border-white/15 bg-[#17171f] p-3 shadow-2xl"
+          style={{
+            top: popover.top,
+            left: popover.left,
+            transform: popover.above ? "translateY(-100%)" : undefined,
+          }}
+          className="pointer-events-none fixed z-50 w-72"
         >
-          <CharacterCard entry={entry} />
+          <div className="animate-pop-in rounded-xl border border-white/15 bg-[#17171f] p-3 shadow-2xl">
+            <CharacterCard entry={entry} />
+          </div>
         </div>
       )}
       {sheet && <CharacterSheet entry={entry} onClose={() => setSheet(false)} />}
@@ -188,8 +214,38 @@ function CharacterSheet({
   );
 }
 
+// Герой из двух времён: лица рядом, под каждым — когда и кто играет
+function FacesRow({ faces, name }: { faces: Face[]; name: string }) {
+  return (
+    <ul className="grid grid-cols-2 gap-2">
+      {faces.map((face) => (
+        <li key={face.label} className="flex min-w-0 gap-2">
+          <Portrait
+            character={{ id: face.label, name, photo: face.photo, about: [] }}
+            className="h-16 w-12"
+            sizes="48px"
+          />
+          <div className="flex min-w-0 flex-col text-xs leading-tight">
+            <span className="text-white/70">{face.label}</span>
+            <span className="text-white/45">{face.actor}</span>
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function CharacterCard({ entry }: { entry: KnownCharacter }) {
   const { character, text } = entry;
+  if (entry.faces.length > 0) {
+    return (
+      <div className="flex flex-col gap-2 text-left">
+        <span className="font-semibold text-white">{character.name}</span>
+        <FacesRow faces={entry.faces} name={character.name} />
+        <span className="text-sm leading-snug text-white/80">{text}</span>
+      </div>
+    );
+  }
   return (
     <div className="flex gap-3 text-left">
       <Portrait
@@ -296,7 +352,19 @@ export function CharacterList({
         <p className="text-sm text-white/50">{hint}</p>
       </div>
       <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {known.map((entry) => (
+        {known.map((entry) =>
+          entry.faces.length > 0 ? (
+            <li
+              key={entry.character.id}
+              className="flex flex-col gap-2 rounded-xl border border-white/10 p-3"
+            >
+              <span className="font-semibold">{entry.character.name}</span>
+              <FacesRow faces={entry.faces} name={entry.character.name} />
+              <span className="text-sm leading-snug text-white/75">
+                {entry.text}
+              </span>
+            </li>
+          ) : (
           <li
             key={entry.character.id}
             className="flex gap-3 rounded-xl border border-white/10 p-3"
@@ -319,7 +387,8 @@ export function CharacterList({
               </span>
             </div>
           </li>
-        ))}
+          ),
+        )}
       </ul>
     </section>
   );
