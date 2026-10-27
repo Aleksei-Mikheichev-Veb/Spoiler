@@ -38,6 +38,11 @@ export function knownCharacters(
     const current = portrait
       ? { ...character, actor: portrait.actor, photo: portrait.photo }
       : { ...character };
+    // Имя могло смениться по ходу сериала — берём последнее известное
+    const renamed = character.about
+      .filter((item) => item.name && !isAfter(item.from, boundary))
+      .at(-1);
+    if (renamed?.name) current.name = renamed.name;
     const faces = hidden
       ? []
       : (character.faces ?? []).filter((face) => !isAfter(face.from, boundary));

@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "photos": "node scripts/download-photos.mjs"
+    "photos": "node scripts/download-photos.mjs",
+    "check:recaps": "node scripts/check-recaps.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

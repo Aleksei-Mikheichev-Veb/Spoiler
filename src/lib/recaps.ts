@@ -30,6 +30,9 @@ export interface SeasonRecap {
 export interface CharacterSnapshot {
   from: [season: number, episode: number];
   text: string;
+  // Новое имя героя с этой серии (Халбранд оказался Сауроном). Действует
+  // и дальше, пока другое описание не сменит его снова
+  name?: string;
 }
 
 export interface Portrait {
@@ -54,7 +57,9 @@ export interface Face {
 
 export interface Character {
   // В текстах пересказа упоминания размечены как [[id|словоформа]]
+  // По первому имени героя (halbrand, а не sauron)
   id: string;
+  // Имя, под которым героя знают с самого начала
   name: string;
   actor?: string;
   photo?: string;
