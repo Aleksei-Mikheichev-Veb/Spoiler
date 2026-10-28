@@ -1,6 +1,7 @@
 // Клиент API ПоискКино (бывший kinopoisk.dev): https://poiskkino.dev
 // Работает только на сервере, чтобы ключ не попал в браузер.
 import "server-only";
+import { missingEpisodes } from "@/lib/episode-fixes";
 import { usableImage } from "@/lib/images";
 
 const API_URL = "https://api.poiskkino.dev";
@@ -241,14 +242,26 @@ export async function getSeasons(movieId: number): Promise<Season[]> {
   });
   // Сезон 0 — спецвыпуски, для рекапов они не нужны.
   // Серии API может отдавать не по порядку.
+  // Недостающие в API серии добавляем из episode-fixes.ts
+  const fixes = missingEpisodes[movieId] ?? [];
   return data.docs
     .filter((season) => season.number > 0)
-    .map((season) => ({
-      ...season,
-      episodes: [...(season.episodes ?? [])].sort(
-        (a, b) => a.number - b.number,
-      ),
-    }));
+    .map((season) => {
+      const episodes = [...(season.episodes ?? [])];
+      for (const fix of fixes) {
+        if (
+          fix.season === season.number &&
+          !episodes.some((episode) => episode.number === fix.episode.number)
+        ) {
+          episodes.push(fix.episode);
+        }
+      }
+      return {
+        ...season,
+        episodesCount: Math.max(season.episodesCount ?? 0, episodes.length),
+        episodes: episodes.sort((a, b) => a.number - b.number),
+      };
+    });
 }
 
 // В карточке фильма имена персонажей не приходят — они есть только
