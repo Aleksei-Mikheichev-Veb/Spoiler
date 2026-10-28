@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { Fragment, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { isAfter, type EpisodeKey } from "@/lib/episodes";
 import { snapshotAt, useRecapBoundary } from "@/lib/recap-boundary";
 import type { Season } from "@/lib/poiskkino";
@@ -156,24 +157,32 @@ function CharacterLink({
       >
         {label}
       </button>
-      {popover && (
-        // Сдвиг вверх — на внешнем блоке, анимация — на внутреннем:
-        // иначе анимация перебивает сдвиг и карточка прыгает
-        <div
-          role="tooltip"
-          style={{
-            top: popover.top,
-            left: popover.left,
-            transform: popover.above ? "translateY(-100%)" : undefined,
-          }}
-          className="pointer-events-none fixed z-50 w-72"
-        >
-          <div className="animate-pop-in rounded-xl border border-white/15 bg-[#17171f] p-3 shadow-2xl">
-            <CharacterCard entry={entry} />
-          </div>
-        </div>
-      )}
-      {sheet && <CharacterSheet entry={entry} onClose={() => setSheet(false)} />}
+      {/* Карточку выводим в конец страницы: имя стоит внутри абзаца <p>,
+          а блоки внутри абзаца в HTML запрещены */}
+      {popover &&
+        createPortal(
+          // Сдвиг вверх — на внешнем блоке, анимация — на внутреннем:
+          // иначе анимация перебивает сдвиг и карточка прыгает
+          <div
+            role="tooltip"
+            style={{
+              top: popover.top,
+              left: popover.left,
+              transform: popover.above ? "translateY(-100%)" : undefined,
+            }}
+            className="pointer-events-none fixed z-50 w-72"
+          >
+            <div className="animate-pop-in rounded-xl border border-white/15 bg-[#17171f] p-3 shadow-2xl">
+              <CharacterCard entry={entry} />
+            </div>
+          </div>,
+          document.body,
+        )}
+      {sheet &&
+        createPortal(
+          <CharacterSheet entry={entry} onClose={() => setSheet(false)} />,
+          document.body,
+        )}
     </>
   );
 }
