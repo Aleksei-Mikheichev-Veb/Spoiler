@@ -1,7 +1,7 @@
 // Клиент API ПоискКино (бывший kinopoisk.dev): https://poiskkino.dev
 // Работает только на сервере, чтобы ключ не попал в браузер.
 import "server-only";
-import { missingEpisodes } from "@/lib/episode-fixes";
+import { missingEpisodes, wrongAirDates } from "@/lib/episode-fixes";
 import { usableImage } from "@/lib/images";
 
 const API_URL = "https://api.poiskkino.dev";
@@ -242,12 +242,21 @@ export async function getSeasons(movieId: number): Promise<Season[]> {
   });
   // Сезон 0 — спецвыпуски, для рекапов они не нужны.
   // Серии API может отдавать не по порядку.
-  // Недостающие в API серии добавляем из episode-fixes.ts
+  // Недостающие серии и неверные даты исправляем по episode-fixes.ts
   const fixes = missingEpisodes[movieId] ?? [];
+  const dateFixes = wrongAirDates[movieId] ?? [];
   return data.docs
     .filter((season) => season.number > 0)
     .map((season) => {
-      const episodes = [...(season.episodes ?? [])];
+      const episodes = (season.episodes ?? []).map((episode) => {
+        const fix = dateFixes.find(
+          (item) =>
+            item.season === season.number &&
+            item.episode === episode.number &&
+            episode.airDate?.slice(0, 10) === item.wrong,
+        );
+        return fix ? { ...episode, airDate: fix.airDate } : episode;
+      });
       for (const fix of fixes) {
         if (
           fix.season === season.number &&
