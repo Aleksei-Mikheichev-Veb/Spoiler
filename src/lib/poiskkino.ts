@@ -60,6 +60,19 @@ export interface Title extends SearchItem {
   premiere?: Premiere;
   // Онлайн-кинотеатры, где есть фильм (данные Кинопоиска)
   watchability?: { items?: WatchOption[] | null } | null;
+  // Продолжения, предыстории и ремейки. BEFORE и AFTER — это порядок
+  // выхода, а не сюжета: предыстория, снятая позже, будет AFTER
+  sequelsAndPrequels?: RelatedTitle[];
+}
+
+export interface RelatedTitle {
+  id: number;
+  name?: string;
+  alternativeName?: string;
+  type: TitleType;
+  year?: number;
+  poster?: Poster;
+  relationType?: "BEFORE" | "AFTER" | "REMAKE" | string;
 }
 
 export interface WatchOption {
@@ -219,6 +232,10 @@ export async function getTitle(id: number): Promise<Title> {
     persons: title.persons?.map((person) => ({
       ...person,
       photo: usableImage(person.photo),
+    })),
+    sequelsAndPrequels: title.sequelsAndPrequels?.map((item) => ({
+      ...item,
+      poster: cleanPoster(item.poster),
     })),
   };
 }

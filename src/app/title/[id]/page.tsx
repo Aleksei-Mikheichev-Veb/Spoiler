@@ -6,6 +6,7 @@ import { FranchisePanel } from "@/components/FranchisePanel";
 import { ListControls } from "@/components/ListControls";
 import { RatingControl } from "@/components/RatingControl";
 import { RecapPanel } from "@/components/RecapPanel";
+import { RelatedTitles } from "@/components/RelatedTitles";
 import { SeasonsList } from "@/components/SeasonsList";
 import { TitleProgress } from "@/components/TitleProgress";
 import { WhereToWatch } from "@/components/WhereToWatch";
@@ -21,6 +22,7 @@ import {
 } from "@/lib/poiskkino";
 import { getFranchiseByFilm } from "@/lib/franchises";
 import { getRecap } from "@/lib/recaps";
+import { getRelated } from "@/lib/related";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -72,7 +74,7 @@ export default async function TitlePage({ params }: Props) {
   const actors = (title.persons ?? [])
     .filter((person) => person.enProfession === "actor")
     .slice(0, 12);
-  const [{ seasons, now }, roles, recap, franchise] = await Promise.all([
+  const [{ seasons, now }, roles, recap, franchise, related] = await Promise.all([
     loadSeasons(title),
     // Без ролей страница всё равно полезна, поэтому ошибку не пробрасываем
     getRoles(
@@ -81,6 +83,7 @@ export default async function TitlePage({ params }: Props) {
     ).catch(() => ({}) as Record<number, string>),
     title.isSeries ? getRecap(title.id) : null,
     title.isSeries ? null : getFranchiseByFilm(title.id),
+    getRelated(title),
   ]);
   const titleInfo = {
     id: title.id,
@@ -149,6 +152,9 @@ export default async function TitlePage({ params }: Props) {
           <WhereToWatch options={title.watchability?.items} />
         </div>
       </section>
+
+      {/* У фильмов из киновселенной своя цепочка фильмов в FranchisePanel */}
+      {!franchise && related.length > 0 && <RelatedTitles items={related} />}
 
       <TitleProgress
         title={titleInfo}
